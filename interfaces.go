@@ -168,3 +168,62 @@ type ColumnStorer interface {
 	GetRelation(relName string) Relationer
 }
 
+func CreateRelation(tabName string, sig []AttrInfo) Relationer {
+	var Relation Relation1
+	Relation1.Name := tabName
+	return Relation1
+}
+
+func GetRelation(relName string) Relationer {
+	return nil
+}
+
+func Load(csvFile string, separator rune) {
+	
+}
+
+func Scan(colList []AttrInfo) Relationer {
+	return nil
+}
+
+func Select(col AttrInfo, comp Comparison, compVal interface{}) Relationer {
+	return nil
+}
+
+func Print() {
+	
+}
+
+func GetRawData() ([]interface{}, []AttrInfo) {
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
