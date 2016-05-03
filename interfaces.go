@@ -2,6 +2,14 @@
 // Store in pure Go for teaching purposes.
 package csgo
 
+import (
+	"os"
+	"encoding/csv"
+	"fmt"
+	"io"
+	"strconv"
+)
+
 
 
 // TODO: Session 1 - Implement the Relationer and ColumnStorer interface by
@@ -178,7 +186,49 @@ func GetRelation(relName string) Relationer {
 	return nil
 }
 
+//	loads a csv file and relays the data to create the columns.
+//	The first row is the tabName, the following rows 
+//	are the data and define the DataType. 	  	    
 func Load(csvFile string, separator rune) {
+	file,_ := os.Open(csvFile)
+	reader := csv.NewReader(file)
+	reader.Comma = separator
+	datatype := []DataTypes{}	
+	i := 0	
+			
+	record,err  := reader.Read()
+	tabName := record
+	record,err = reader.Read()
+	
+	for i < len(record) {
+		datatype = append(datatype, GetType(record[i]))		 
+		i = i+1
+	}
+	fmt.Print("Tab Name: ")
+	fmt.Print(tabName)
+	fmt.Println()
+	fmt.Print("DataType: ")
+	fmt.Print(datatype)
+	fmt.Println()
+	
+	for {
+			if err == io.EOF {
+				break}
+			
+			if err != nil {
+				fmt.Print(err)
+				break}
+					
+			i=0
+			
+			for i < len(record) {
+				fmt.Print(record[i] + " ")
+				i = i+1
+			}
+			fmt.Println()
+			
+			record,err = reader.Read()
+		}
 	
 }
 
@@ -198,10 +248,21 @@ func GetRawData() ([]interface{}, []AttrInfo) {
 	
 }
 
-
-
-
-
+func GetType(tabName string) DataTypes {
+	_,err := strconv.Atoi(tabName)
+	
+	if err != nil {
+		_, err := strconv.ParseFloat(tabName, 64)
+		
+		if err != nil {
+			return STRING			
+		}
+		
+		return FLOAT
+	}
+	
+	return INT	
+}
 
 
 
