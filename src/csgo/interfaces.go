@@ -194,6 +194,7 @@ func Load(csvFile string, separator rune) {
 	reader := csv.NewReader(file)
 	reader.Comma = separator
 	datatype := []DataTypes{}	
+	
 	i := 0	
 			
 	record,err  := reader.Read()
