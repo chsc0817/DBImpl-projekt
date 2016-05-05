@@ -176,13 +176,14 @@ type ColumnStorer interface {
 	GetRelation(relName string) Relationer
 }
 
-func CreateRelation(tabName string, sig []AttrInfo) Relationer {
-	var CS ColumnStore
-	return CS.Relations[tabName]
+func (cs ColumnStore) CreateRelation(tabName string, sig []AttrInfo) Relationer {
+	//var cl []Column
+	//cs.Relations[tabName] = Relation{ tabName, cl }
+	return cs.Relations[tabName]
 }
 
-func GetRelation(relName string) Relationer {
-	return nil
+func (cs ColumnStore) GetRelation(relName string) Relationer {
+	return cs.Relations[relName]
 }
 
 //	loads a csv file and relays the data to create the columns.
