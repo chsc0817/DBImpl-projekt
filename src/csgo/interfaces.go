@@ -176,9 +176,12 @@ type ColumnStorer interface {
 	GetRelation(relName string) Relationer
 }
 
+//--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 func (cs ColumnStore) CreateRelation(tabName string, sig []AttrInfo) Relationer {
 	//var cl []Column
 	//cs.Relations[tabName] = Relation{ tabName, cl }
+	Relations[tabName] = Relationer
 	return cs.Relations[tabName]
 }
 
@@ -245,9 +248,13 @@ func Print() {
 	
 }
 
-//func GetRawData() ([]interface{}, []AttrInfo) {
-	
-//}
+func (rl Relation) GetRawData() ([]interface{}, []AttrInfo) {
+	sig []AttrInfo
+	data []interface{}
+	for i = 0; i < rl.Column.len; i++ {
+		sig = make(rl.Column[].AttrInfo)
+	}
+}
 
 func GetType(tabName string) DataTypes {
 	_,err := strconv.Atoi(tabName)
