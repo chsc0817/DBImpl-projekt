@@ -163,36 +163,38 @@ type Relationer interface {
 // ColumnStorer methods.
 type ColumnStore struct {
 	// Relations is the mapping of relation names to their object reference.
-	Relations map[string]Relationer
+	Relations map[string]Relation
 }
 
 // ColumnStorer is an interface for an In-Memory Column Store (the database).
 type ColumnStorer interface {
 	// CreateRelation creates a new relation within the column store and returns
 	// an object reference.
-	CreateRelation(tabName string, sig []AttrInfo) Relationer
+	CreateRelation(tabName string, sig []AttrInfo) Relation
 	// GetRelation returns the object reference of a relation associated with the
 	// passed relation name.
-	GetRelation(relName string) Relationer
+	GetRelation(relName string) Relation
 }
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-func (cs ColumnStore) CreateRelation(tabName string, sig []AttrInfo) Relationer {
-	//var cl []Column
-	//cs.Relations[tabName] = Relation{ tabName, cl }
-	//cs.Relations[tabName] = Relationer
+func (cs ColumnStore) CreateRelation(tabName string, sig []AttrInfo) Relation {
+	var cl = make( []Column, len( sig ) )
+	for i := 0; i < len( sig ) ; i++ {
+		cl[i].Signature = sig [i]
+	}
+	cs.Relations[tabName] = Relation{ tabName, cl }
 	return cs.Relations[tabName]
 }
 
-func (cs ColumnStore) GetRelation(relName string) Relationer {
+func (cs ColumnStore) GetRelation(relName string) Relation {
 	return cs.Relations[relName]
 }
 
 //	loads a csv file and relays the data to create the columns.
 //	The first row is the tabName, the following rows 
 //	are the data and define the DataType. 	  	    
-func Load(csvFile string, separator rune) {
+func (rl Relation) Load(csvFile string, separator rune) {
 	file,_ := os.Open(csvFile)
 	reader := csv.NewReader(file)
 	reader.Comma = separator
@@ -236,22 +238,19 @@ func Load(csvFile string, separator rune) {
 	
 }
 
-func Scan(colList []AttrInfo) Relationer {
+func (rl Relation) Scan(colList []AttrInfo) Relationer {
 	return nil
 }
 
-func Select(col AttrInfo, comp Comparison, compVal interface{}) Relationer {
+func (rl Relation) Select(col AttrInfo, comp Comparison, compVal interface{}) Relationer {
 	return nil
 }
 
-func Print() {
+func (rl Relation) Print() {
 	
 }
 
 func (rl Relation) GetRawData() ([]interface{}, []AttrInfo) {
-	//for i = 0; i < rl.Column.len; i++ {
-		//sig = make(rl.Column[].AttrInfo)
-	//}
 	var sig = make( []AttrInfo, len( rl.Columns ) )
 	var data = make( []interface{}, len( rl.Columns ) )
 	for i := 0; i < len( rl.Columns ); i++ {
