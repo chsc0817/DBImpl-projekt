@@ -130,14 +130,14 @@ type Relationer interface {
 	Load(csvFile string, separator rune)
 
 	// Scan should simply return the specified columns of the relation.
-	Scan(colList []AttrInfo) Relationer
+	Scan(colList []AttrInfo) Relation
 
 	// Select should return a filtered collection of records defined by predicate
 	// arguments (col, comp, compVal) of one relation.
 	// col represents the column used for comparison.
 	// comp defines the type of comparison.
 	// compVal is the value used for the comparison.
-	Select(col AttrInfo, comp Comparison, compVal interface{}) Relationer
+	Select(col AttrInfo, comp Comparison, compVal interface{}) Relation
 
 	// Print should output the relation to the standard output in record
 	// representation.
@@ -151,12 +151,12 @@ type Relationer interface {
 	// HashJoin should implement the hash join operator between two relations.
 	// joinType specifies the kind of hash join (inner, outer, semi ...)
 	// The join may be executed on one or more columns of each relation.
-	HashJoin(col1 []AttrInfo, input2 []Column, col2 []AttrInfo, joinType JoinType) Relationer
+	HashJoin(col1 []AttrInfo, input2 []Column, col2 []AttrInfo, joinType JoinType) Relation
 
 	// Aggregate should implement the grouping and aggregation of columns.
 	// groupBy specifies on which columns it should be grouped.
 	// aggregate defines the column on which the aggrFunc should be applied.
-	Aggregate(groupBy []AttrInfo, aggregate AttrInfo, aggrFunc AggrFunc) Relationer
+	Aggregate(groupBy []AttrInfo, aggregate AttrInfo, aggrFunc AggrFunc) Relation
 }
 
 // ColumnStore is an example structure on which one could define the
@@ -238,15 +238,16 @@ func (rl Relation) Load(csvFile string, separator rune) {
 	
 }
 
-func (rl Relation) Scan(colList []AttrInfo) Relationer {
-	return nil
+func (rl Relation) Scan(colList []AttrInfo) Relation {
+	return rl
 }
 
-func (rl Relation) Select(col AttrInfo, comp Comparison, compVal interface{}) Relationer {
-	return nil
+func (rl Relation) Select(col AttrInfo, comp Comparison, compVal interface{}) Relation {
+	return rl
 }
 
 func (rl Relation) Print() {
+	//data, sig := rl.GetRawData()
 	
 }
 
