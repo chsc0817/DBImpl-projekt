@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"path"
 )
 
 
@@ -191,51 +192,54 @@ func (cs ColumnStore) GetRelation(relName string) Relation {
 	return cs.Relations[relName]
 }
 
-//	loads a csv file and relays the data to create the columns.
-//	The first row is the tabName, the following rows 
-//	are the data and define the DataType. 	  	    
-func (rl Relation) Load(csvFile string, separator rune) {
+//	loads a csv file and returns it as a relation
+//  the relation has the same name as the file
+//	the first row is the tabName
+//  the following rows are the Data
+//  the second row defines the DataType	  	    
+func (rl Relation) Load(csvFile string, separator rune) Relation {	
+	var create_column Column
 	file,_ := os.Open(csvFile)
 	reader := csv.NewReader(file)
-	reader.Comma = separator
-	datatype := []DataTypes{}	
-	
-	i := 0	
-			
+	reader.Comma = separator				
 	record,err  := reader.Read()
 	tabName := record
-	record,err = reader.Read()
 	
-	for i < len(record) {
-		datatype = append(datatype, GetType(record[i]))		 
-		i = i+1
+	rl.Name = path.Base(csvFile)
+	record,err = reader.Read()	
+	
+	for i:= 0; i < len(record); i++ {
+		create_column.Signature.Name = tabName[i]
+		create_column.Signature.Type = GetType(record[i])
+		create_column.Signature.Enc = NOCOMP
+		rl.Columns = append(rl.Columns, create_column)
 	}
-	fmt.Print("Tab Name: ")
-	fmt.Print(tabName)
-	fmt.Println()
-	fmt.Print("DataType: ")
-	fmt.Print(datatype)
-	fmt.Println()
-	
-	for {
-			if err == io.EOF {
-				break}
+		
+	for {  			
+		if err == io.EOF {
+			break}
+		
+		if err != nil {
+			fmt.Print(err)
+			break}
 			
-			if err != nil {
-				fmt.Print(err)
-				break}
+		for i:=0; i < len(record); i++ {			
+			
+			switch rl.Columns[i].Signature.Type {
+				case INT: 
+					rl.Columns[i].Data, _ = strconv.Atoi(record[i])								
 					
-			i=0
-			
-			for i < len(record) {
-				fmt.Print(record[i] + " ")
-				i = i+1
-			}
-			fmt.Println()
-			
-			record,err = reader.Read()
-		}
+				case FLOAT:
+					rl.Columns[i].Data, _ = strconv.ParseFloat(record[i] ,64)
+					
+				case STRING:
+					rl.Columns[i].Data = record[i]				
+			}			
+		}				
+		record,err = reader.Read()
+	}
 	
+	return rl
 }
 
 func (rl Relation) Scan(colList []AttrInfo) Relation {
@@ -285,28 +289,3 @@ func GetType(tabName string) DataTypes {
 	
 	return INT	
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
