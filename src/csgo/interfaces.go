@@ -239,7 +239,16 @@ func (rl Relation) Load(csvFile string, separator rune) {
 }
 
 func (rl Relation) Scan(colList []AttrInfo) Relation {
-	return rl
+	var ret Relation
+	ret.Name = rl.Name
+	for i := 0; i < len(colList); i++ {
+		for j := 0; j < len(rl.Columns); j++ {
+			if rl.Columns[j].Signature == colList[i] {
+				ret.Columns = append( ret.Columns, rl.Columns[j])
+			}
+		}
+	}
+	return ret
 }
 
 func (rl Relation) Select(col AttrInfo, comp Comparison, compVal interface{}) Relation {
