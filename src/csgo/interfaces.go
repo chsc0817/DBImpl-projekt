@@ -181,7 +181,7 @@ type ColumnStorer interface {
 func (cs ColumnStore) CreateRelation(tabName string, sig []AttrInfo) Relationer {
 	//var cl []Column
 	//cs.Relations[tabName] = Relation{ tabName, cl }
-	Relations[tabName] = Relationer
+	//cs.Relations[tabName] = Relationer
 	return cs.Relations[tabName]
 }
 
@@ -249,11 +249,16 @@ func Print() {
 }
 
 func (rl Relation) GetRawData() ([]interface{}, []AttrInfo) {
-	sig []AttrInfo
-	data []interface{}
-	for i = 0; i < rl.Column.len; i++ {
-		sig = make(rl.Column[].AttrInfo)
+	//for i = 0; i < rl.Column.len; i++ {
+		//sig = make(rl.Column[].AttrInfo)
+	//}
+	var sig = make( []AttrInfo, len( rl.Columns ) )
+	var data = make( []interface{}, len( rl.Columns ) )
+	for i := 0; i < len( rl.Columns ); i++ {
+		sig[i] = rl.Columns[i].Signature
+		data[i] = rl.Columns[i].Data
 	}
+	return data, sig
 }
 
 func GetType(tabName string) DataTypes {
