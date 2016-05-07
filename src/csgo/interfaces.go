@@ -179,15 +179,20 @@ type ColumnStorer interface {
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+// Create a new Relation
 func (cs ColumnStore) CreateRelation(tabName string, sig []AttrInfo) Relation {
+	//Create the number of Columns
 	var cl = make( []Column, len( sig ) )
+	//Register the AttrInfo in the Columns
 	for i := 0; i < len( sig ) ; i++ {
 		cl[i].Signature = sig [i]
 	}
+	//Creating the Relation out of the Name an the Columns
 	cs.Relations[tabName] = Relation{ tabName, cl }
 	return cs.Relations[tabName]
 }
 
+//Returns the Relation
 func (cs ColumnStore) GetRelation(relName string) Relation {
 	return cs.Relations[relName]
 }
@@ -238,13 +243,15 @@ func (rl Relation) Load(csvFile string, separator rune) Relation {
 		}				
 		record,err = reader.Read()
 	}
-	
+	//Denn brauchen wir doch gar nicht, weil wir doch dadurch, dass es eine Methode ist, die Werte etc schon eingetragen hat.
 	return rl
 }
 
+//Returns a Relation where the Columns are filtered by their AttrInfo
 func (rl Relation) Scan(colList []AttrInfo) Relation {
 	var ret Relation
 	ret.Name = rl.Name
+	//Test all Column if their AttrInfo is one of the wanted AttrInfo/Colums
 	for i := 0; i < len(colList); i++ {
 		for j := 0; j < len(rl.Columns); j++ {
 			if rl.Columns[j].Signature == colList[i] {
@@ -264,9 +271,12 @@ func (rl Relation) Print() {
 	
 }
 
+//Returns the AttrInfos and the Data of a Relation
 func (rl Relation) GetRawData() ([]interface{}, []AttrInfo) {
+	//Create Attributes for the collection of the AttrInfo and the Data
 	var sig = make( []AttrInfo, len( rl.Columns ) )
 	var data = make( []interface{}, len( rl.Columns ) )
+	//Collection of the AttrInfo and the Data
 	for i := 0; i < len( rl.Columns ); i++ {
 		sig[i] = rl.Columns[i].Signature
 		data[i] = rl.Columns[i].Data
