@@ -180,7 +180,7 @@ type ColumnStorer interface {
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // Create a new Relation
-func (cs ColumnStore) CreateRelation(tabName string, sig []AttrInfo) Relation {
+func (cs ColumnStore) CreateRelation( tabName string, sig []AttrInfo ) Relation {
 	//Create the number of Columns
 	var cl = make( []Column, len( sig ) )
 	//Register the AttrInfo in the Columns
@@ -193,7 +193,7 @@ func (cs ColumnStore) CreateRelation(tabName string, sig []AttrInfo) Relation {
 }
 
 //Returns the Relation
-func (cs ColumnStore) GetRelation(relName string) Relation {
+func (cs ColumnStore) GetRelation( relName string ) Relation {
 	return cs.Relations[relName]
 }
 
@@ -202,13 +202,14 @@ func (cs ColumnStore) GetRelation(relName string) Relation {
 //	the first row is the tabName
 //  the following rows are the Data
 //  the second row defines the DataType	  	    
-func (rl Relation) Load(csvFile string, separator rune) Relation {	
+func (rl Relation) Load( csvFile string, separator rune ) Relation {	
 	var create_column Column
-	file,_ := os.Open(csvFile)
-	reader := csv.NewReader(file)
+	file,_ := os.Open( csvFile )
+	reader := csv.NewReader( file )
 	reader.Comma = separator				
 	record,err  := reader.Read()
 	colName := record
+
 	
 	rl.Name = path.Base(csvFile)
 	record,err = reader.Read()	
@@ -218,11 +219,10 @@ func (rl Relation) Load(csvFile string, separator rune) Relation {
 		create_column.Signature.Type = GetType( record[i] )
 		create_column.Signature.Enc = NOCOMP
 		rl.Columns = append( rl.Columns, create_column )
-		rl.Columns[i].Data = make( []interface{}, len( record ) )
 	}
-	fmt.Println( record )
+	
+
 	for j := 0; ; j++ {
-		record,err = reader.Read()
 		if err == io.EOF {
 			break
 		}
@@ -231,27 +231,29 @@ func (rl Relation) Load(csvFile string, separator rune) Relation {
 			fmt.Print( err )
 			break
 		}
-		fmt.Println( record )
-		for i:=0; i < len(record); i++ {
-			fmt.Println( i )
+		
+		for i:=0; i < len( record ); i++ {
+			//var datas
 			switch rl.Columns[i].Signature.Type {
 				case INT: 
-					rl.Columns[i].Data[j],_ = strconv.Atoi(record[i])								
-					
+					datas,_ := strconv.Atoi( record[i] )								
+					rl.Columns[i].Data = append( rl.Columns[i].Data, datas ) 
+			
 				case FLOAT:
-					rl.Columns[i].Data[j],_ = strconv.ParseFloat(record[i] ,64)
-					
+					datas,_ := strconv.ParseFloat( record[i], 64 )
+					rl.Columns[i].Data = append( rl.Columns[i].Data, datas ) 
+				
 				case STRING:
-					rl.Columns[i].Data[j].append( rl.Columns[i].Data[j], record[i] )
+					rl.Columns[i].Data = append( rl.Columns[i].Data, record[i] )
 			}
-		}				
+		}
+		record,err = reader.Read()
 	}
-	fmt.Println( rl.Columns ) // ZU ENTFERNEN
 	return rl
 }
 
 //Returns a Relation where the Columns are filtered by their AttrInfo
-func (rl Relation) Scan(colList []AttrInfo) Relation {
+func (rl Relation) Scan( colList []AttrInfo ) Relation {
 	var ret Relation
 	ret.Name = rl.Name
 	//Test all Column if their AttrInfo is one of the wanted AttrInfo/Colums
@@ -266,7 +268,7 @@ func (rl Relation) Scan(colList []AttrInfo) Relation {
 }
 
 
-func (rl Relation) Select(col AttrInfo, comp Comparison, compVal interface{}) Relation {
+func (rl Relation) Select( col AttrInfo, comp Comparison, compVal interface{} ) Relation {
 	return rl
 }
 
@@ -302,7 +304,7 @@ func (rl Relation) GetRawData() ([]interface{}, []AttrInfo) {
 	return data, sig
 }
 
-func GetType(tabName string) DataTypes {
+func GetType( tabName string ) DataTypes {
 	_,err := strconv.Atoi(tabName)
 	
 	if err != nil {
