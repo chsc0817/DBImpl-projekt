@@ -128,7 +128,7 @@ type Relationer interface {
 	// Load should load and insert the data of a CSV file into the column store.
 	// csvFile is the path to the CSV File.
 	// separator is separator character used in the file.
-	Load(csvFile string, separator rune)
+	Load(csvFile string, separator rune) Relation
 
 	// Scan should simply return the specified columns of the relation.
 	Scan(colList []AttrInfo) Relation
@@ -267,8 +267,19 @@ func (rl Relation) Select(col AttrInfo, comp Comparison, compVal interface{}) Re
 }
 
 func (rl Relation) Print() {
-	//data, sig := rl.GetRawData()
-	
+	fmt.Println( rl.Name )
+	fmt.Println()
+	fmt.Println( len( rl.Columns ) )
+	fmt.Println()
+	for i := 0; i < len( rl.Columns ); i++ {
+		fmt.Print( rl.Columns[i].Signature.Name + " | " )
+	}
+	fmt.Println()
+	fmt.Println( "------------------------------------------------------------------------------------------------------------" )
+	for i := 0; i < len( rl.Columns ); i++ {
+
+	}
+	//println( data )
 }
 
 //Returns the AttrInfos and the Data of a Relation
