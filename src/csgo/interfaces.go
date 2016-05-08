@@ -111,7 +111,7 @@ type Column struct {
 	// Signature gives meta information about the column.
 	Signature AttrInfo
 	// Data contains the raw or compressed data (e.g. in the form of a slice).
-	Data interface{}
+	Data []interface{}
 }
 
 // Relation is an example structure on which one could define the Relationer
@@ -147,7 +147,7 @@ type Relationer interface {
 	// GetRawData should return all columns as a slice of slices (columns) with
 	// the underlying type (int, float, string) in decompressed form and the
 	// corresponding meta information.
-	GetRawData() ([]interface{}, []AttrInfo)
+	GetRawData() ([][]interface{}, []AttrInfo)
 
 	// HashJoin should implement the hash join operator between two relations.
 	// joinType specifies the kind of hash join (inner, outer, semi ...)
@@ -208,42 +208,45 @@ func (rl Relation) Load(csvFile string, separator rune) Relation {
 	reader := csv.NewReader(file)
 	reader.Comma = separator				
 	record,err  := reader.Read()
-	tabName := record
+	colName := record
 	
 	rl.Name = path.Base(csvFile)
 	record,err = reader.Read()	
 	
 	for i:= 0; i < len(record); i++ {
-		create_column.Signature.Name = tabName[i]
-		create_column.Signature.Type = GetType(record[i])
+		create_column.Signature.Name = colName[i]
+		create_column.Signature.Type = GetType( record[i] )
 		create_column.Signature.Enc = NOCOMP
-		rl.Columns = append(rl.Columns, create_column)
+		rl.Columns = append( rl.Columns, create_column )
+		rl.Columns[i].Data = make( []interface{}, len( record ) )
 	}
-		
-	for {  			
+	fmt.Println( record )
+	for j := 0; ; j++ {
+		record,err = reader.Read()
 		if err == io.EOF {
-			break}
+			break
+		}
 		
 		if err != nil {
-			fmt.Print(err)
-			break}
-			
-		for i:=0; i < len(record); i++ {			
-			
+			fmt.Print( err )
+			break
+		}
+		fmt.Println( record )
+		for i:=0; i < len(record); i++ {
+			fmt.Println( i )
 			switch rl.Columns[i].Signature.Type {
 				case INT: 
-					rl.Columns[i].Data, _ = strconv.Atoi(record[i])								
+					rl.Columns[i].Data[j],_ = strconv.Atoi(record[i])								
 					
 				case FLOAT:
-					rl.Columns[i].Data, _ = strconv.ParseFloat(record[i] ,64)
+					rl.Columns[i].Data[j],_ = strconv.ParseFloat(record[i] ,64)
 					
 				case STRING:
-					rl.Columns[i].Data = record[i]				
-			}			
+					rl.Columns[i].Data[j].append( rl.Columns[i].Data[j], record[i] )
+			}
 		}				
-		record,err = reader.Read()
 	}
-	//Denn brauchen wir doch gar nicht, weil wir doch dadurch, dass es eine Methode ist, die Werte etc schon eingetragen hat.
+	fmt.Println( rl.Columns ) // ZU ENTFERNEN
 	return rl
 }
 
@@ -262,9 +265,11 @@ func (rl Relation) Scan(colList []AttrInfo) Relation {
 	return ret
 }
 
+
 func (rl Relation) Select(col AttrInfo, comp Comparison, compVal interface{}) Relation {
 	return rl
 }
+
 
 func (rl Relation) Print() {
 	fmt.Println( rl.Name )
@@ -292,6 +297,8 @@ func (rl Relation) GetRawData() ([]interface{}, []AttrInfo) {
 		sig[i] = rl.Columns[i].Signature
 		data[i] = rl.Columns[i].Data
 	}
+	fmt.Println( sig )
+	fmt.Println( data )
 	return data, sig
 }
 
