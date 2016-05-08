@@ -217,12 +217,11 @@ func (rl Relation) Load( csvFile string, separator rune ) Relation {
 	//Creating the Colums
 	for i:= 0; i < len(record); i++ {
 		create_column.Signature.Name = colName[i]
-		create_column.Signature.Type = GetType( record[i] )
+		create_column.Signature.Type = getType( record[i] )
 		create_column.Signature.Enc = NOCOMP
 		rl.Columns = append( rl.Columns, create_column )
 	}
 	
-
 	for j := 0; ; j++ {
 		if err == io.EOF {
 			break
@@ -258,8 +257,8 @@ func (rl Relation) Scan( colList []AttrInfo ) Relation {
 	var ret Relation
 	ret.Name = rl.Name
 	//Test all Column if their AttrInfo is one of the wanted AttrInfo/Colums
-	for i := 0; i < len(colList); i++ {
-		for j := 0; j < len(rl.Columns); j++ {
+	for i := 0; i < len( colList ); i++ {
+		for j := 0; j < len( rl.Columns ); j++ {
 			if rl.Columns[j].Signature == colList[i] {
 				ret.Columns = append( ret.Columns, rl.Columns[j] )
 			}
@@ -268,12 +267,67 @@ func (rl Relation) Scan( colList []AttrInfo ) Relation {
 	return ret
 }
 
-
+//Filter the Relation for records
 func (rl Relation) Select( col AttrInfo, comp Comparison, compVal interface{} ) Relation {
-	return rl
+	var colu int
+	var ret Relation
+	var create_column Column
+	
+	//Create the new Relation + Columns and search the Column with which we shall compare
+	ret.Name = rl.Name
+	for i := 0; i < len( rl.Columns ); i++ {
+		create_column.Signature = rl.Columns[i].Signature
+		ret.Columns = append( ret.Columns, create_column )
+		if rl.Columns[i].Signature == col {
+			colu = i
+		}
+	}
+	//Compare the data and the searched Value and put the right ones in the new Relation
+	for i := 0; i < len( rl.Columns[0].Data ); i++ {
+		switch comp {
+			case EQ :
+				if rl.Columns[colu].Data[i] == compVal {
+					for j := 0; j < len( rl.Columns ); j++ {
+						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
+					}
+				}
+			case NEQ :
+				if rl.Columns[colu].Data[i] != compVal {
+					for j := 0; j < len( rl.Columns ); j++ {
+						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
+					}
+				}
+			case LT :
+				if interfaceToString( rl.Columns[colu].Data[i] ) < interfaceToString( compVal ) {
+					for j := 0; j < len( rl.Columns ); j++ {
+						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
+					}
+				}
+			case LEQ :
+				if interfaceToString( rl.Columns[colu].Data[i] ) <= interfaceToString( compVal ) {
+					for j := 0; j < len( rl.Columns ); j++ {
+						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
+					}
+				}
+			case GT :
+				if interfaceToString( rl.Columns[colu].Data[i] ) > interfaceToString( compVal ) {
+					for j := 0; j < len( rl.Columns ); j++ {
+						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
+					}
+				}
+			case GEQ :
+				if interfaceToString( rl.Columns[colu].Data[i] ) >= interfaceToString( compVal ) {
+					for j := 0; j < len( rl.Columns ); j++ {
+						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
+					}
+				}
+		}
+	}
+	return ret
 }
 
-func InterfaceToString( inputInterface interface{} ) string {
+//Converts the Interface to a String
+func interfaceToString( inputInterface interface{} ) string {
 	switch inputInterface.(type) {
 		case int,int32,int64 :
             return strconv.Itoa( inputInterface.(int) )
@@ -283,9 +337,9 @@ func InterfaceToString( inputInterface interface{} ) string {
 		default :
             return inputInterface.(string)
 	}
-	return ""
 }
 
+//Prints the relation
 func (rl Relation) Print() {
 	var dataout = make( [][]string, len( rl.Columns ) )
 	var metaout string
@@ -303,7 +357,7 @@ func (rl Relation) Print() {
 	}
 	for j := 0; j < dataSetCount; j++ {
 		for i := 0; i < columnCount; i++ {
-			dataout[i] = append( dataout[i], InterfaceToString( rl.Columns[i].Data[j] ) )
+			dataout[i] = append( dataout[i], interfaceToString( rl.Columns[i].Data[j] ) )
 		}
 	}
 	//testing for the max width of the strings
@@ -315,7 +369,7 @@ func (rl Relation) Print() {
 			}
 		}
 	}	
-		
+	//Print the column names
 	metaout = "| "
 	for i := 0; i < columnCount; i++ {
 		for j := 0; j < ( width[i] - len( dataout[i][0] ) ); j++ {
@@ -328,7 +382,8 @@ func (rl Relation) Print() {
 		fmt.Print( "-" )
 	}
 	fmt.Println()
-	for j := 1; j < dataSetCount; j++ {
+	//Print the datas in the columns
+	for j := 1; j < dataSetCount + 1; j++ {
 		fmt.Print( "| " )
 		for i := 0; i < columnCount; i++ {
 			for k := 0; k < ( width[i] - len( dataout[i][j] ) ); k++ {
@@ -356,7 +411,7 @@ func (rl Relation) GetRawData() ([]interface{}, []AttrInfo) {
 	return data, sig
 }
 
-func GetType( tabName string ) DataTypes {
+func getType( tabName string ) DataTypes {
 	_,err := strconv.Atoi(tabName)
 	
 	if err != nil {
