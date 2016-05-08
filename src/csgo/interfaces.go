@@ -211,9 +211,10 @@ func (rl Relation) Load( csvFile string, separator rune ) Relation {
 	colName := record
 
 	
-	rl.Name = path.Base(csvFile)
+	rl.Name = path.Base( csvFile ) //Name enthält einen Punkt muss überarbeitet werden
 	record,err = reader.Read()	
 	
+	//Creating the Colums
 	for i:= 0; i < len(record); i++ {
 		create_column.Signature.Name = colName[i]
 		create_column.Signature.Type = GetType( record[i] )
@@ -233,7 +234,7 @@ func (rl Relation) Load( csvFile string, separator rune ) Relation {
 		}
 		
 		for i:=0; i < len( record ); i++ {
-			//var datas
+			//Reading in the data by their type
 			switch rl.Columns[i].Signature.Type {
 				case INT: 
 					datas,_ := strconv.Atoi( record[i] )								
@@ -260,7 +261,7 @@ func (rl Relation) Scan( colList []AttrInfo ) Relation {
 	for i := 0; i < len(colList); i++ {
 		for j := 0; j < len(rl.Columns); j++ {
 			if rl.Columns[j].Signature == colList[i] {
-				ret.Columns = append( ret.Columns, rl.Columns[j])
+				ret.Columns = append( ret.Columns, rl.Columns[j] )
 			}
 		}
 	}
@@ -272,21 +273,72 @@ func (rl Relation) Select( col AttrInfo, comp Comparison, compVal interface{} ) 
 	return rl
 }
 
+func InterfaceToString( inputInterface interface{} ) string {
+	switch inputInterface.(type) {
+		case int,int32,int64 :
+            return strconv.Itoa( inputInterface.(int) )
+		case float64 :
+            return strconv.FormatFloat( inputInterface.(float64), 'E', -1, 64)
+		//string
+		default :
+            return inputInterface.(string)
+	}
+	return ""
+}
 
 func (rl Relation) Print() {
-	fmt.Println( rl.Name )
-	fmt.Println()
-	fmt.Println( len( rl.Columns ) )
-	fmt.Println()
-	for i := 0; i < len( rl.Columns ); i++ {
-		fmt.Print( rl.Columns[i].Signature.Name + " | " )
-	}
-	fmt.Println()
-	fmt.Println( "------------------------------------------------------------------------------------------------------------" )
-	for i := 0; i < len( rl.Columns ); i++ {
+	var dataout = make( [][]string, len( rl.Columns ) )
+	var metaout string
+	var width = make( []int, len( rl.Columns ) )
+	var dataSetCount int
+	var columnCount int
 
+	//fmt.Println( rl.Name )
+	//fmt.Println()
+	dataSetCount = len( rl.Columns[0].Data )
+	columnCount = len( rl.Columns )
+	//Fetching  the data
+	for i := 0; i < len( rl.Columns ); i++ {
+		dataout[i] = append( dataout[i], rl.Columns[i].Signature.Name )
 	}
-	//println( data )
+	for j := 0; j < dataSetCount; j++ {
+		for i := 0; i < columnCount; i++ {
+			dataout[i] = append( dataout[i], InterfaceToString( rl.Columns[i].Data[j] ) )
+		}
+	}
+	//testing for the max width of the strings
+	for i := 0; i < columnCount; i++ {
+		width[i] = 0
+		for j := 0; j < dataSetCount; j++ {
+			if len( dataout[i][j] ) > width[i] {
+				width[i] = len( dataout[i][j] )
+			}
+		}
+	}	
+		
+	metaout = "| "
+	for i := 0; i < columnCount; i++ {
+		for j := 0; j < ( width[i] - len( dataout[i][0] ) ); j++ {
+			metaout = metaout + " "
+		}
+		metaout = metaout + dataout[i][0] + " | "
+	}
+	fmt.Println( metaout )
+	for i := 0; i < len( metaout ) - 1; i++ {
+		fmt.Print( "-" )
+	}
+	fmt.Println()
+	for j := 1; j < dataSetCount; j++ {
+		fmt.Print( "| " )
+		for i := 0; i < columnCount; i++ {
+			for k := 0; k < ( width[i] - len( dataout[i][j] ) ); k++ {
+				fmt.Print( " " )
+			}
+			fmt.Print( dataout[i][j] )
+			fmt.Print( " | " )
+		}
+		fmt.Println()
+	}
 }
 
 //Returns the AttrInfos and the Data of a Relation
