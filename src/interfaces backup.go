@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-	"path"
 )
 
 
@@ -179,6 +178,12 @@ type ColumnStorer interface {
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+func NewColumnStore() ColumnStore {
+	var cs ColumnStore
+	cs.Relations = make(map[string]Relation)
+	return cs
+}
+
 // Create a new Relation
 func (cs ColumnStore) CreateRelation( tabName string, sig []AttrInfo ) Relation {
 	//Create the number of Columns
@@ -203,24 +208,11 @@ func (cs ColumnStore) GetRelation( relName string ) Relation {
 //  the following rows are the Data
 //  the second row defines the DataType	  	    
 func (rl Relation) Load( csvFile string, separator rune ) Relation {	
-	var create_column Column
+	//var create_column Column
 	file,_ := os.Open( csvFile )
 	reader := csv.NewReader( file )
 	reader.Comma = separator				
 	record,err  := reader.Read()
-	colName := record
-
-	
-	rl.Name = path.Base( csvFile ) //Name enthält einen Punkt muss überarbeitet werden
-	record,err = reader.Read()	
-	
-	//Creating the Colums
-	for i:= 0; i < len(record); i++ {
-		create_column.Signature.Name = colName[i]
-		create_column.Signature.Type = getType( record[i] )
-		create_column.Signature.Enc = NOCOMP
-		rl.Columns = append( rl.Columns, create_column )
-	}
 	
 	for j := 0; ; j++ {
 		if err == io.EOF {
@@ -251,6 +243,7 @@ func (rl Relation) Load( csvFile string, separator rune ) Relation {
 	}
 	return rl
 }
+
 
 //Returns a Relation where the Columns are filtered by their AttrInfo
 func (rl Relation) Scan( colList []AttrInfo ) Relation {
@@ -288,41 +281,78 @@ func (rl Relation) Select( col AttrInfo, comp Comparison, compVal interface{} ) 
 			case EQ :
 				if rl.Columns[colu].Data[i] == compVal {
 					for j := 0; j < len( rl.Columns ); j++ {
-						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
+						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[j].Data[i] )
 					}
 				}
 			case NEQ :
 				if rl.Columns[colu].Data[i] != compVal {
 					for j := 0; j < len( rl.Columns ); j++ {
-						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
+						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[j].Data[i] )
 					}
 				}
 			case LT :
-				if interfaceToString( rl.Columns[colu].Data[i] ) < interfaceToString( compVal ) {
-					for j := 0; j < len( rl.Columns ); j++ {
-						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
-					}
+				switch rl.Columns[colu].Signature.Type {
+					case INT :
+						if rl.Columns[colu].Data[i].(int) < compVal.(int) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[j].Data[i] )
+							}
+						}
+					case FLOAT :
+						if rl.Columns[colu].Data[i].(float64) < compVal.(float64) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[j].Data[i] )
+							}
+						}
 				}
 			case LEQ :
-				if interfaceToString( rl.Columns[colu].Data[i] ) <= interfaceToString( compVal ) {
-					for j := 0; j < len( rl.Columns ); j++ {
-						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
-					}
+				switch rl.Columns[colu].Signature.Type {
+					case INT :
+						if rl.Columns[colu].Data[i].(int) <= compVal.(int) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[j].Data[i] )
+							}
+						}
+					case FLOAT :
+						if rl.Columns[colu].Data[i].(float64) <= compVal.(float64) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[j].Data[i] )
+							}
+						}
 				}
 			case GT :
-				if interfaceToString( rl.Columns[colu].Data[i] ) > interfaceToString( compVal ) {
-					for j := 0; j < len( rl.Columns ); j++ {
-						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
-					}
+				switch rl.Columns[colu].Signature.Type {
+					case INT :
+						if rl.Columns[colu].Data[i].(int) > compVal.(int) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[j].Data[i] )
+							}
+						}
+					case FLOAT :
+						if rl.Columns[colu].Data[i].(float64) > compVal.(float64) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[j].Data[i] )
+							}
+						}
 				}
 			case GEQ :
-				if interfaceToString( rl.Columns[colu].Data[i] ) >= interfaceToString( compVal ) {
-					for j := 0; j < len( rl.Columns ); j++ {
-						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
-					}
+				switch rl.Columns[colu].Signature.Type {
+					case INT :
+						if rl.Columns[colu].Data[i].(int) >= compVal.(int) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[j].Data[i] )
+							}
+						}
+					case FLOAT :
+						if rl.Columns[colu].Data[i].(float64) >= compVal.(float64) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[j].Data[i] )
+							}
+						}
 				}
 		}
 	}
+	fmt.Println( ret.Columns )
 	return ret
 }
 

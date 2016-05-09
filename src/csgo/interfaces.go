@@ -134,7 +134,7 @@ type Relationer interface {
 	// col represents the column used for comparison.
 	// comp defines the type of comparison.
 	// compVal is the value used for the comparison.
-	Select(col AttrInfo, comp Comparison, compVal interface{}) Relationer
+	//Select(col AttrInfo, comp Comparison, compVal interface{}) Relationer
 
 	// Print should output the relation to the standard output in record
 	// representation.
@@ -150,13 +150,13 @@ type Relationer interface {
 	// joinType specifies the kind of hash join (inner, outer, semi ...)
 	// compType specifies the comparison type for the join.
 	// The join may be executed on one or more columns of each relation.
-	HashJoin(col1 []AttrInfo, rightRelation string, col2 []AttrInfo, joinType JoinType,
-		compType Comparison) Relationer
+	//HashJoin(col1 []AttrInfo, rightRelation string, col2 []AttrInfo, joinType JoinType,
+	//	compType Comparison) Relationer
 
 	// Aggregate should implement the grouping and aggregation of columns.
 	// aggregate defines the column on which the aggrFunc should be applied.
 	// All other columns needs to be grouped beforehand.
-	Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer
+	//Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer
 }
 
 // ColumnStore is an example structure on which one could define the ColumnStorer methods.
@@ -173,20 +173,28 @@ type ColumnStorer interface {
 	GetRelation(relName string) Relationer
 }
 
+func NewColumnStore() ColumnStorer {
+	var cs ColumnStore
+	cs.Relations = make(map[string]Relationer)
+	return &cs
+}
+
 // Create a new Relation
-func (cs ColumnStore) CreateRelation( tabName string, sig []AttrInfo ) Relationer {
+func (cs *ColumnStore) CreateRelation( tabName string, sig []AttrInfo ) Relationer {
+	var rel Relation
 	//Create the number of Columns
-	var cl = make( []Column, len( sig ) )
+	rel.Columns = make( []Column, len( sig ) )
 	//Register the AttrInfo in the Columns
 	for i := 0; i < len( sig ) ; i++ {
-		cl[i].Signature = sig [i]
+		rel.Columns[i].Signature = sig [i]
 	}
-	//Creating the Relation out of the Name an the Columns 
-	return &Relation{ tabName, cl }
+	//Creating the Relation out of the Name an the Columns
+	rel.Name = tabName
+	return &rel
 }
 
 //Returns the Relation
-func (cs ColumnStore) GetRelation( relName string ) Relationer {
+func (cs *ColumnStore) GetRelation( relName string ) Relationer {
 	return cs.Relations[relName]
 }
 
@@ -255,9 +263,9 @@ func (rl *Relation) Load( csvFile string, separator rune ) {
 		}
 	}
 }
-/*
+
 //Returns a Relation where the Columns are filtered by their AttrInfo
-func (rl Relation) Scan( colList []AttrInfo ) Relation {
+func (rl *Relation) Scan( colList []AttrInfo ) Relationer {
 	var ret Relation
 	ret.Name = rl.Name
 	//Test all Column if their AttrInfo is one of the wanted AttrInfo/Colums
@@ -268,11 +276,24 @@ func (rl Relation) Scan( colList []AttrInfo ) Relation {
 			}
 		}
 	}
-	return ret
+	return &Relation{ ret.Name, ret.Columns }
 }
 
+func interfacelen( inter interface{} ) int {
+	switch inter.(type) {
+		case []int :
+			return len( inter.([]int) )
+		case []float64 :
+			return len( inter.([]float64) )
+		case []string :
+			return len( inter.([]string) )
+	}
+	return 0
+}
+
+/*
 //Filter the Relation for records
-func (rl Relation) Select( col AttrInfo, comp Comparison, compVal interface{} ) Relation {
+func (rl Relation) Select( col AttrInfo, comp Comparison, compVal interface{} ) Relationer {
 	var colu int
 	var ret Relation
 	var create_column Column
@@ -287,64 +308,147 @@ func (rl Relation) Select( col AttrInfo, comp Comparison, compVal interface{} ) 
 		}
 	}
 	//Compare the data and the searched Value and put the right ones in the new Relation
-	for i := 0; i < len( rl.Columns[0].Data ); i++ {
+	for i := 0; i < interfacelen( rl.Columns[0].Data ); i++ {
 		switch comp {
 			case EQ :
-				if rl.Columns[colu].Data[i] == compVal {
-					for j := 0; j < len( rl.Columns ); j++ {
-						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
-					}
+				switch rl.Columns[colu].Signature.Type {
+					case INT :
+						if rl.Columns[colu].Data.([]int)[i] == compVal.(int) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]int, 0) }
+								ret.Columns[j].Data = append( ret.Columns[j].Data.([]int), rl.Columns[j].Data.([]int)[i] )
+							}
+						}
+					case FLOAT :
+						if rl.Columns[colu].Data.([]float64)[i] == compVal.(float64) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]float64, 0) }
+								ret.Columns[j].Data = append( ret.Columns[j].Data.([]float64), rl.Columns[j].Data.([]float64)[i] )
+							}
+						}
+					case STRING :
+						if rl.Columns[colu].Data.([]string)[i] == compVal.(string) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]string, 0) }
+								ret.Columns[j].Data = append( ret.Columns[j].Data.([]string), rl.Columns[j].Data.([]string)[i] )
+							}
+						}
 				}
 			case NEQ :
-				if rl.Columns[colu].Data[i] != compVal {
-					for j := 0; j < len( rl.Columns ); j++ {
-						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
-					}
+				switch rl.Columns[colu].Signature.Type {
+					case INT :
+						if rl.Columns[colu].Data.([]int)[i] != compVal.(int) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]int, 0) }
+								ret.Columns[j].Data = append( ret.Columns[j].Data.([]int), rl.Columns[j].Data.([]int)[i] )
+							}
+						}
+					case FLOAT :
+						if rl.Columns[colu].Data.([]float64)[i] != compVal.(float64) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]float64, 0) }
+								ret.Columns[j].Data = append( ret.Columns[j].Data.([]float64), rl.Columns[j].Data.([]float64)[i] )
+							}
+						}
+					case STRING :
+						if rl.Columns[colu].Data.([]string)[i] != compVal.(string) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]string, 0) }
+								ret.Columns[j].Data = append( ret.Columns[j].Data.([]string), rl.Columns[j].Data.([]string)[i] )
+							}
+						}
 				}
 			case LT :
-				if interfaceToString( rl.Columns[colu].Data[i] ) < interfaceToString( compVal ) {
-					for j := 0; j < len( rl.Columns ); j++ {
-						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
-					}
+				switch rl.Columns[colu].Signature.Type {
+					case INT :
+						if rl.Columns[colu].Data.([]int)[i] < compVal.(int) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]int, 0) }
+								ret.Columns[j].Data = append( ret.Columns[j].Data.([]int), rl.Columns[j].Data.([]int)[i] )
+							}
+						}
+					case FLOAT :
+						if rl.Columns[colu].Data.([]float64)[i] < compVal.(float64) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]float64, 0) }
+								ret.Columns[j].Data = append( ret.Columns[j].Data.([]float64), rl.Columns[j].Data.([]float64)[i] )
+							}
+						}
 				}
 			case LEQ :
-				if interfaceToString( rl.Columns[colu].Data[i] ) <= interfaceToString( compVal ) {
-					for j := 0; j < len( rl.Columns ); j++ {
-						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
-					}
+				switch rl.Columns[colu].Signature.Type {
+					case INT :
+						if rl.Columns[colu].Data.([]int)[i] <= compVal.(int) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]int, 0) }
+								ret.Columns[j].Data = append( ret.Columns[j].Data.([]int), rl.Columns[j].Data.([]int)[i] )
+							}
+						}
+					case FLOAT :
+						if rl.Columns[colu].Data.([]float64)[i] <= compVal.(float64) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]float64, 0) }
+								ret.Columns[j].Data = append( ret.Columns[j].Data.([]float64), rl.Columns[j].Data.([]float64)[i] )
+							}
+						}
 				}
 			case GT :
-				if interfaceToString( rl.Columns[colu].Data[i] ) > interfaceToString( compVal ) {
-					for j := 0; j < len( rl.Columns ); j++ {
-						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
-					}
+				fmt.Println()
+				fmt.Println( rl.Columns[colu].Signature.Type )
+				switch rl.Columns[colu].Signature.Type {
+					case INT :
+						if rl.Columns[colu].Data.([]int)[i] > compVal.(int) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]int, 0) }
+								ret.Columns[j].Data = append( ret.Columns[j].Data.([]int), rl.Columns[j].Data.([]int)[i] )
+							}
+						}
+					case FLOAT :
+						if rl.Columns[colu].Data.([]float64)[i] > compVal.(float64) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]float64, 0) }
+								ret.Columns[j].Data = append( ret.Columns[j].Data.([]float64), rl.Columns[j].Data.([]float64)[i] )
+							}
+						}
 				}
 			case GEQ :
-				if interfaceToString( rl.Columns[colu].Data[i] ) >= interfaceToString( compVal ) {
-					for j := 0; j < len( rl.Columns ); j++ {
-						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
-					}
+				switch rl.Columns[colu].Signature.Type {
+					case INT :
+						if rl.Columns[colu].Data.([]int)[i] >= compVal.(int) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]int, 0) }
+								ret.Columns[j].Data = append( ret.Columns[j].Data.([]int), rl.Columns[j].Data.([]int)[i] )
+							}
+						}
+					case FLOAT :
+						if rl.Columns[colu].Data.([]float64)[i] >= compVal.(float64) {
+							for j := 0; j < len( rl.Columns ); j++ {
+								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]float64, 0) }
+								ret.Columns[j].Data = append( ret.Columns[j].Data.([]float64), rl.Columns[j].Data.([]float64)[i] )
+							}
+						}
 				}
 		}
 	}
-	return ret
+	fmt.Println( ret.Columns )
+	return &ret
 }
-
+*/
 //Converts the Interface to a String
-func interfaceToString( inputInterface interface{} ) string {
+func interfaceToString( inputInterface interface{}, j int ) string {
 	switch inputInterface.(type) {
-		case int,int32,int64 :
-            return strconv.Itoa( inputInterface.(int) )
-		case float64 :
-            return strconv.FormatFloat( inputInterface.(float64), 'E', -1, 64)
+		case []int :
+            return strconv.Itoa( inputInterface.([]int)[j] )
+		case []float64 :
+            return strconv.FormatFloat( inputInterface.([]float64)[j], 'E', -1, 64)
 		//string
 		default :
-            return inputInterface.(string)
+            return inputInterface.([]string)[j]
 	}
 }
 
 //Prints the relation
-func (rl Relation) Print() {
+func (rl *Relation) Print() {
 	var dataout = make( [][]string, len( rl.Columns ) )
 	var metaout string
 	var width = make( []int, len( rl.Columns ) )
@@ -353,7 +457,7 @@ func (rl Relation) Print() {
 
 	//fmt.Println( rl.Name )
 	//fmt.Println()
-	dataSetCount = len( rl.Columns[0].Data )
+	dataSetCount = interfacelen( rl.Columns[0].Data )
 	columnCount = len( rl.Columns )
 	//Fetching  the data
 	for i := 0; i < len( rl.Columns ); i++ {
@@ -361,7 +465,7 @@ func (rl Relation) Print() {
 	}
 	for j := 0; j < dataSetCount; j++ {
 		for i := 0; i < columnCount; i++ {
-			dataout[i] = append( dataout[i], interfaceToString( rl.Columns[i].Data[j] ) )
+			dataout[i] = append( dataout[i], interfaceToString( rl.Columns[i].Data, j ) )
 		}
 	}
 	//testing for the max width of the strings
@@ -401,7 +505,7 @@ func (rl Relation) Print() {
 }
 
 //Returns the AttrInfos and the Data of a Relation
-func (rl Relation) GetRawData() ([]interface{}, []AttrInfo) {
+func (rl *Relation) GetRawData() ([]interface{}, []AttrInfo) {
 	//Create Attributes for the collection of the AttrInfo and the Data
 	var sig = make( []AttrInfo, len( rl.Columns ) )
 	var data = make( []interface{}, len( rl.Columns ) )
@@ -410,23 +514,37 @@ func (rl Relation) GetRawData() ([]interface{}, []AttrInfo) {
 		sig[i] = rl.Columns[i].Signature
 		data[i] = rl.Columns[i].Data
 	}
-	fmt.Println( sig )
-	fmt.Println( data )
 	return data, sig
 }
 
-func getType( tabName string ) DataTypes {
-	_,err := strconv.Atoi(tabName)
-	
-	if err != nil {
-		_, err := strconv.ParseFloat(tabName, 64)
-		
-		if err != nil {
-			return STRING			
-		}
-		
-		return FLOAT
-	}
-	
-	return INT	
-}*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
