@@ -52,7 +52,7 @@ func main() {
 	table := cs.CreateRelation("partsupptest", sig)
 	table.Load("C:/Uni/Projekte/Ausgabe/partsupptest.tbl", '|')
 	table = table.Scan([]csgo.AttrInfo{partkey, suppkey, availqty, supplycost})
-	//table = table.Select(availqty, csgo.GT, 1000)
+	table = table.Select(availqty, csgo.GT, 1000)
 	table.Print()
 	table.GetRawData()
 }

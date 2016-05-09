@@ -134,7 +134,7 @@ type Relationer interface {
 	// col represents the column used for comparison.
 	// comp defines the type of comparison.
 	// compVal is the value used for the comparison.
-	//Select(col AttrInfo, comp Comparison, compVal interface{}) Relationer
+	Select(col AttrInfo, comp Comparison, compVal interface{}) Relationer
 
 	// Print should output the relation to the standard output in record
 	// representation.
@@ -291,7 +291,32 @@ func interfacelen( inter interface{} ) int {
 	return 0
 }
 
-/*
+func copyColumns( outputColumns []Column, inputColumns []Column, record int ) []Column {
+	for j := 0; j < len( inputColumns ); j++ {
+		if nil == outputColumns[j].Data { 
+			switch inputColumns[j].Data.(type) {
+				case []int :
+					outputColumns[j].Data = make( []int, 0 ) 
+				case []float64 :
+					outputColumns[j].Data = make( []float64, 0 ) 
+				case []string :
+					outputColumns[j].Data = make( []string, 0 ) 
+			}
+		}
+	}
+	for j := 0; j < len( inputColumns ); j++ {
+		switch inputColumns[j].Data.(type) {
+			case []int :
+				outputColumns[j].Data = append( outputColumns[j].Data.([]int), inputColumns[j].Data.([]int)[record] )
+			case []float64 :
+				outputColumns[j].Data = append( outputColumns[j].Data.([]float64), inputColumns[j].Data.([]float64)[record] )
+			case []string :
+				outputColumns[j].Data = append( outputColumns[j].Data.([]string), inputColumns[j].Data.([]string)[record] )
+		}
+	}
+	return outputColumns
+}
+
 //Filter the Relation for records
 func (rl Relation) Select( col AttrInfo, comp Comparison, compVal interface{} ) Relationer {
 	var colu int
@@ -314,126 +339,81 @@ func (rl Relation) Select( col AttrInfo, comp Comparison, compVal interface{} ) 
 				switch rl.Columns[colu].Signature.Type {
 					case INT :
 						if rl.Columns[colu].Data.([]int)[i] == compVal.(int) {
-							for j := 0; j < len( rl.Columns ); j++ {
-								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]int, 0) }
-								ret.Columns[j].Data = append( ret.Columns[j].Data.([]int), rl.Columns[j].Data.([]int)[i] )
-							}
+							ret.Columns = copyColumns( ret.Columns, rl.Columns, i )
 						}
 					case FLOAT :
 						if rl.Columns[colu].Data.([]float64)[i] == compVal.(float64) {
-							for j := 0; j < len( rl.Columns ); j++ {
-								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]float64, 0) }
-								ret.Columns[j].Data = append( ret.Columns[j].Data.([]float64), rl.Columns[j].Data.([]float64)[i] )
-							}
+							ret.Columns = copyColumns( ret.Columns, rl.Columns, i )
 						}
 					case STRING :
 						if rl.Columns[colu].Data.([]string)[i] == compVal.(string) {
-							for j := 0; j < len( rl.Columns ); j++ {
-								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]string, 0) }
-								ret.Columns[j].Data = append( ret.Columns[j].Data.([]string), rl.Columns[j].Data.([]string)[i] )
-							}
+							ret.Columns = copyColumns( ret.Columns, rl.Columns, i )
 						}
 				}
 			case NEQ :
 				switch rl.Columns[colu].Signature.Type {
 					case INT :
 						if rl.Columns[colu].Data.([]int)[i] != compVal.(int) {
-							for j := 0; j < len( rl.Columns ); j++ {
-								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]int, 0) }
-								ret.Columns[j].Data = append( ret.Columns[j].Data.([]int), rl.Columns[j].Data.([]int)[i] )
-							}
+							ret.Columns = copyColumns( ret.Columns, rl.Columns, i )
 						}
 					case FLOAT :
 						if rl.Columns[colu].Data.([]float64)[i] != compVal.(float64) {
-							for j := 0; j < len( rl.Columns ); j++ {
-								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]float64, 0) }
-								ret.Columns[j].Data = append( ret.Columns[j].Data.([]float64), rl.Columns[j].Data.([]float64)[i] )
-							}
+							ret.Columns = copyColumns( ret.Columns, rl.Columns, i )
 						}
 					case STRING :
 						if rl.Columns[colu].Data.([]string)[i] != compVal.(string) {
-							for j := 0; j < len( rl.Columns ); j++ {
-								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]string, 0) }
-								ret.Columns[j].Data = append( ret.Columns[j].Data.([]string), rl.Columns[j].Data.([]string)[i] )
-							}
+							ret.Columns = copyColumns( ret.Columns, rl.Columns, i )
 						}
 				}
 			case LT :
 				switch rl.Columns[colu].Signature.Type {
 					case INT :
 						if rl.Columns[colu].Data.([]int)[i] < compVal.(int) {
-							for j := 0; j < len( rl.Columns ); j++ {
-								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]int, 0) }
-								ret.Columns[j].Data = append( ret.Columns[j].Data.([]int), rl.Columns[j].Data.([]int)[i] )
-							}
+							ret.Columns = copyColumns( ret.Columns, rl.Columns, i )
 						}
 					case FLOAT :
 						if rl.Columns[colu].Data.([]float64)[i] < compVal.(float64) {
-							for j := 0; j < len( rl.Columns ); j++ {
-								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]float64, 0) }
-								ret.Columns[j].Data = append( ret.Columns[j].Data.([]float64), rl.Columns[j].Data.([]float64)[i] )
-							}
+							ret.Columns = copyColumns( ret.Columns, rl.Columns, i )
 						}
 				}
 			case LEQ :
 				switch rl.Columns[colu].Signature.Type {
 					case INT :
 						if rl.Columns[colu].Data.([]int)[i] <= compVal.(int) {
-							for j := 0; j < len( rl.Columns ); j++ {
-								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]int, 0) }
-								ret.Columns[j].Data = append( ret.Columns[j].Data.([]int), rl.Columns[j].Data.([]int)[i] )
-							}
+							ret.Columns = copyColumns( ret.Columns, rl.Columns, i )
 						}
 					case FLOAT :
 						if rl.Columns[colu].Data.([]float64)[i] <= compVal.(float64) {
-							for j := 0; j < len( rl.Columns ); j++ {
-								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]float64, 0) }
-								ret.Columns[j].Data = append( ret.Columns[j].Data.([]float64), rl.Columns[j].Data.([]float64)[i] )
-							}
+							ret.Columns = copyColumns( ret.Columns, rl.Columns, i )
 						}
 				}
 			case GT :
-				fmt.Println()
-				fmt.Println( rl.Columns[colu].Signature.Type )
 				switch rl.Columns[colu].Signature.Type {
 					case INT :
 						if rl.Columns[colu].Data.([]int)[i] > compVal.(int) {
-							for j := 0; j < len( rl.Columns ); j++ {
-								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]int, 0) }
-								ret.Columns[j].Data = append( ret.Columns[j].Data.([]int), rl.Columns[j].Data.([]int)[i] )
-							}
+							ret.Columns = copyColumns( ret.Columns, rl.Columns, i )
 						}
 					case FLOAT :
 						if rl.Columns[colu].Data.([]float64)[i] > compVal.(float64) {
-							for j := 0; j < len( rl.Columns ); j++ {
-								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]float64, 0) }
-								ret.Columns[j].Data = append( ret.Columns[j].Data.([]float64), rl.Columns[j].Data.([]float64)[i] )
-							}
+							ret.Columns = copyColumns( ret.Columns, rl.Columns, i )
 						}
 				}
 			case GEQ :
 				switch rl.Columns[colu].Signature.Type {
 					case INT :
 						if rl.Columns[colu].Data.([]int)[i] >= compVal.(int) {
-							for j := 0; j < len( rl.Columns ); j++ {
-								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]int, 0) }
-								ret.Columns[j].Data = append( ret.Columns[j].Data.([]int), rl.Columns[j].Data.([]int)[i] )
-							}
+							ret.Columns = copyColumns( ret.Columns, rl.Columns, i )
 						}
 					case FLOAT :
 						if rl.Columns[colu].Data.([]float64)[i] >= compVal.(float64) {
-							for j := 0; j < len( rl.Columns ); j++ {
-								if nil == ret.Columns[j].Data { ret.Columns[j].Data = make([]float64, 0) }
-								ret.Columns[j].Data = append( ret.Columns[j].Data.([]float64), rl.Columns[j].Data.([]float64)[i] )
-							}
+							ret.Columns = copyColumns( ret.Columns, rl.Columns, i )
 						}
 				}
 		}
 	}
-	fmt.Println( ret.Columns )
 	return &ret
 }
-*/
+
 //Converts the Interface to a String
 func interfaceToString( inputInterface interface{}, j int ) string {
 	switch inputInterface.(type) {
