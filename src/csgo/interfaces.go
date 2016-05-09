@@ -173,6 +173,28 @@ type ColumnStorer interface {
 	GetRelation(relName string) Relationer
 }
 
+// Create a new Relation
+func (cs ColumnStore) CreateRelation( tabName string, sig []AttrInfo ) Relationer {
+	//Create the number of Columns
+	var cl = make( []Column, len( sig ) )
+	//Register the AttrInfo in the Columns
+	for i := 0; i < len( sig ) ; i++ {
+		cl[i].Signature = sig [i]
+	}
+	//Creating the Relation out of the Name an the Columns 
+	return &Relation{ tabName, cl }
+}
+
+//Returns the Relation
+func (cs ColumnStore) GetRelation( relName string ) Relationer {
+	return cs.Relations[relName]
+}
+
+//	loads a csv file and returns it as a relation
+//  the relation has the same name as the file
+//	the first row is the tabName
+//  the following rows are the Data
+//  the second row defines the DataType	  	  
 func (rl *Relation) Load( csvFile string, separator rune ) {	
 	file,err := os.Open(csvFile)
 	
@@ -233,3 +255,178 @@ func (rl *Relation) Load( csvFile string, separator rune ) {
 		}
 	}
 }
+/*
+//Returns a Relation where the Columns are filtered by their AttrInfo
+func (rl Relation) Scan( colList []AttrInfo ) Relation {
+	var ret Relation
+	ret.Name = rl.Name
+	//Test all Column if their AttrInfo is one of the wanted AttrInfo/Colums
+	for i := 0; i < len( colList ); i++ {
+		for j := 0; j < len( rl.Columns ); j++ {
+			if rl.Columns[j].Signature == colList[i] {
+				ret.Columns = append( ret.Columns, rl.Columns[j] )
+			}
+		}
+	}
+	return ret
+}
+
+//Filter the Relation for records
+func (rl Relation) Select( col AttrInfo, comp Comparison, compVal interface{} ) Relation {
+	var colu int
+	var ret Relation
+	var create_column Column
+	
+	//Create the new Relation + Columns and search the Column with which we shall compare
+	ret.Name = rl.Name
+	for i := 0; i < len( rl.Columns ); i++ {
+		create_column.Signature = rl.Columns[i].Signature
+		ret.Columns = append( ret.Columns, create_column )
+		if rl.Columns[i].Signature == col {
+			colu = i
+		}
+	}
+	//Compare the data and the searched Value and put the right ones in the new Relation
+	for i := 0; i < len( rl.Columns[0].Data ); i++ {
+		switch comp {
+			case EQ :
+				if rl.Columns[colu].Data[i] == compVal {
+					for j := 0; j < len( rl.Columns ); j++ {
+						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
+					}
+				}
+			case NEQ :
+				if rl.Columns[colu].Data[i] != compVal {
+					for j := 0; j < len( rl.Columns ); j++ {
+						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
+					}
+				}
+			case LT :
+				if interfaceToString( rl.Columns[colu].Data[i] ) < interfaceToString( compVal ) {
+					for j := 0; j < len( rl.Columns ); j++ {
+						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
+					}
+				}
+			case LEQ :
+				if interfaceToString( rl.Columns[colu].Data[i] ) <= interfaceToString( compVal ) {
+					for j := 0; j < len( rl.Columns ); j++ {
+						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
+					}
+				}
+			case GT :
+				if interfaceToString( rl.Columns[colu].Data[i] ) > interfaceToString( compVal ) {
+					for j := 0; j < len( rl.Columns ); j++ {
+						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
+					}
+				}
+			case GEQ :
+				if interfaceToString( rl.Columns[colu].Data[i] ) >= interfaceToString( compVal ) {
+					for j := 0; j < len( rl.Columns ); j++ {
+						ret.Columns[j].Data = append( ret.Columns[j].Data, rl.Columns[colu].Data[i] )
+					}
+				}
+		}
+	}
+	return ret
+}
+
+//Converts the Interface to a String
+func interfaceToString( inputInterface interface{} ) string {
+	switch inputInterface.(type) {
+		case int,int32,int64 :
+            return strconv.Itoa( inputInterface.(int) )
+		case float64 :
+            return strconv.FormatFloat( inputInterface.(float64), 'E', -1, 64)
+		//string
+		default :
+            return inputInterface.(string)
+	}
+}
+
+//Prints the relation
+func (rl Relation) Print() {
+	var dataout = make( [][]string, len( rl.Columns ) )
+	var metaout string
+	var width = make( []int, len( rl.Columns ) )
+	var dataSetCount int
+	var columnCount int
+
+	//fmt.Println( rl.Name )
+	//fmt.Println()
+	dataSetCount = len( rl.Columns[0].Data )
+	columnCount = len( rl.Columns )
+	//Fetching  the data
+	for i := 0; i < len( rl.Columns ); i++ {
+		dataout[i] = append( dataout[i], rl.Columns[i].Signature.Name )
+	}
+	for j := 0; j < dataSetCount; j++ {
+		for i := 0; i < columnCount; i++ {
+			dataout[i] = append( dataout[i], interfaceToString( rl.Columns[i].Data[j] ) )
+		}
+	}
+	//testing for the max width of the strings
+	for i := 0; i < columnCount; i++ {
+		width[i] = 0
+		for j := 0; j < dataSetCount; j++ {
+			if len( dataout[i][j] ) > width[i] {
+				width[i] = len( dataout[i][j] )
+			}
+		}
+	}	
+	//Print the column names
+	metaout = "| "
+	for i := 0; i < columnCount; i++ {
+		for j := 0; j < ( width[i] - len( dataout[i][0] ) ); j++ {
+			metaout = metaout + " "
+		}
+		metaout = metaout + dataout[i][0] + " | "
+	}
+	fmt.Println( metaout )
+	for i := 0; i < len( metaout ) - 1; i++ {
+		fmt.Print( "-" )
+	}
+	fmt.Println()
+	//Print the datas in the columns
+	for j := 1; j < dataSetCount + 1; j++ {
+		fmt.Print( "| " )
+		for i := 0; i < columnCount; i++ {
+			for k := 0; k < ( width[i] - len( dataout[i][j] ) ); k++ {
+				fmt.Print( " " )
+			}
+			fmt.Print( dataout[i][j] )
+			fmt.Print( " | " )
+		}
+		fmt.Println()
+	}
+}
+
+//Returns the AttrInfos and the Data of a Relation
+func (rl Relation) GetRawData() ([]interface{}, []AttrInfo) {
+	//Create Attributes for the collection of the AttrInfo and the Data
+	var sig = make( []AttrInfo, len( rl.Columns ) )
+	var data = make( []interface{}, len( rl.Columns ) )
+	//Collection of the AttrInfo and the Data
+	for i := 0; i < len( rl.Columns ); i++ {
+		sig[i] = rl.Columns[i].Signature
+		data[i] = rl.Columns[i].Data
+	}
+	fmt.Println( sig )
+	fmt.Println( data )
+	return data, sig
+}
+
+func getType( tabName string ) DataTypes {
+	_,err := strconv.Atoi(tabName)
+	
+	if err != nil {
+		_, err := strconv.ParseFloat(tabName, 64)
+		
+		if err != nil {
+			return STRING			
+		}
+		
+		return FLOAT
+	}
+	
+	return INT	
+}*/
