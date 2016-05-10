@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-	//"path"
+	"path"
 )
 
 // TODO: Session 1 - Implement the Relationer and ColumnStorer interface by using e.g. the
@@ -198,11 +198,9 @@ func (cs *ColumnStore) GetRelation( relName string ) Relationer {
 	return cs.Relations[relName]
 }
 
-//	loads a csv file and returns it as a relation
-//  the relation has the same name as the file
-//	the first row is the tabName
-//  the following rows are the Data
-//  the second row defines the DataType	  	  
+//loads a csv or tbl file and adds the data into your Column Store
+//csvFile is the filepath
+//separator  
 func (rl *Relation) Load( csvFile string, separator rune ) {	
 	file,err := os.Open(csvFile)
 	
@@ -220,18 +218,35 @@ func (rl *Relation) Load( csvFile string, separator rune ) {
 		switch rl.Columns[i].Signature.Type {
 				case INT: 
 					rl.Columns[i].Data = make([]int, 0)
-					datas,_ := strconv.Atoi(record[i])								
+					datas,err := strconv.Atoi(record[i])	
+					
+					if err != nil {
+						fmt.Println("error while loading", path.Base(csvFile))
+						fmt.Print("row ", len(rl.Columns[i].Data.([]int))+1, ", column ", i+1, ": ")
+						fmt.Print("\"", record[i], "\"")
+						fmt.Println(" is not type int")
+						os.Exit(1)
+					}
 					rl.Columns[i].Data = append( rl.Columns[i].Data.([]int), datas ) 
 			
 				case FLOAT:
 					rl.Columns[i].Data = make([]float64, 0)
-					datas,_ := strconv.ParseFloat( record[i], 64 )
+					datas,err := strconv.ParseFloat( record[i], 64 )
+					
+					if err != nil {
+						fmt.Println("error while loading", path.Base(csvFile))
+						fmt.Print("row ", len(rl.Columns[i].Data.([]int))+1, ", column ", i+1, ": ")
+						fmt.Print("\"", record[i], "\"")
+						fmt.Println(" is not type float")
+						os.Exit(1)
+					}
 					rl.Columns[i].Data = append( rl.Columns[i].Data.([]float64), datas ) 
 				
 				case STRING:
 					rl.Columns[i].Data = make([]string, 0)
 					rl.Columns[i].Data = append( rl.Columns[i].Data.([]string), record[i] )
-			}	
+		}	
+		
 	}	
 	
 	for {
@@ -250,11 +265,27 @@ func (rl *Relation) Load( csvFile string, separator rune ) {
 			//Reading in the data by their type
 			switch rl.Columns[i].Signature.Type {
 				case INT: 
-					datas,_ := strconv.Atoi(record[i])								
+					datas,err := strconv.Atoi(record[i])
+					
+					if err != nil {
+						fmt.Println("error while loading", path.Base(csvFile))
+						fmt.Print("row ", len(rl.Columns[i].Data.([]int))+1, ", column ", i+1, ": ")
+						fmt.Print("\"", record[i], "\"")
+						fmt.Println(" is not type int")
+						os.Exit(1)
+					}
 					rl.Columns[i].Data = append(rl.Columns[i].Data.([]int), datas) 
 			
 				case FLOAT:
-					datas,_ := strconv.ParseFloat(record[i], 64)
+					datas,err := strconv.ParseFloat(record[i], 64)
+					
+					if err != nil {
+						fmt.Println("error while loading", path.Base(csvFile))
+						fmt.Print("row ", len(rl.Columns[i].Data.([]int))+1, ", column ", i+1, ": ")
+						fmt.Print("\"", record[i], "\"")
+						fmt.Println(" is not type float")
+						os.Exit(1)
+					}
 					rl.Columns[i].Data = append(rl.Columns[i].Data.([]float64), datas) 
 				
 				case STRING:
