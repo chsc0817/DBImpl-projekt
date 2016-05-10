@@ -213,42 +213,45 @@ func (rl *Relation) Load( csvFile string, separator rune ) {
 	reader.Comma = separator
 	record,err  := reader.Read()
 	
-	for i:= 0; i < len(record); i++ {
-		
+	if len(record) != len(rl.Columns) {
+		fmt.Println("Number of defined columns is different than the number of columns in ", path.Base(csvFile))
+		os.Exit(1)
+	}
+	//create the data slices and insert the first row
+	for i:= 0; i < len(record); i++ {		
 		switch rl.Columns[i].Signature.Type {
-				case INT: 
-					rl.Columns[i].Data = make([]int, 0)
-					datas,err := strconv.Atoi(record[i])	
-					
-					if err != nil {
-						fmt.Println("error while loading", path.Base(csvFile))
-						fmt.Print("row ", len(rl.Columns[i].Data.([]int))+1, ", column ", i+1, ": ")
-						fmt.Print("\"", record[i], "\"")
-						fmt.Println(" is not type int")
-						os.Exit(1)
-					}
-					rl.Columns[i].Data = append( rl.Columns[i].Data.([]int), datas ) 
-			
-				case FLOAT:
-					rl.Columns[i].Data = make([]float64, 0)
-					datas,err := strconv.ParseFloat( record[i], 64 )
-					
-					if err != nil {
-						fmt.Println("error while loading", path.Base(csvFile))
-						fmt.Print("row ", len(rl.Columns[i].Data.([]int))+1, ", column ", i+1, ": ")
-						fmt.Print("\"", record[i], "\"")
-						fmt.Println(" is not type float")
-						os.Exit(1)
-					}
-					rl.Columns[i].Data = append( rl.Columns[i].Data.([]float64), datas ) 
+			case INT: 
+				rl.Columns[i].Data = make([]int, 0)
+				datas,err := strconv.Atoi(record[i])	
 				
-				case STRING:
-					rl.Columns[i].Data = make([]string, 0)
-					rl.Columns[i].Data = append( rl.Columns[i].Data.([]string), record[i] )
-		}	
+				if err != nil {
+					fmt.Println("error while loading", path.Base(csvFile))
+					fmt.Print("row ", len(rl.Columns[i].Data.([]int))+1, ", column ", i+1, ": ")
+					fmt.Print("\"", record[i], "\"")
+					fmt.Println(" is not type int")
+					os.Exit(1)
+				}
+				rl.Columns[i].Data = append( rl.Columns[i].Data.([]int), datas ) 
 		
+			case FLOAT:
+				rl.Columns[i].Data = make([]float64, 0)
+				datas,err := strconv.ParseFloat( record[i], 64 )
+				
+				if err != nil {
+					fmt.Println("error while loading", path.Base(csvFile))
+					fmt.Print("row ", len(rl.Columns[i].Data.([]int))+1, ", column ", i+1, ": ")
+					fmt.Print("\"", record[i], "\"")
+					fmt.Println(" is not type float")
+					os.Exit(1)
+				}
+				rl.Columns[i].Data = append( rl.Columns[i].Data.([]float64), datas ) 
+			
+			case STRING:
+				rl.Columns[i].Data = make([]string, 0)
+				rl.Columns[i].Data = append( rl.Columns[i].Data.([]string), record[i] )
+		}	
 	}	
-	
+
 	for {
 		record,err = reader.Read()
 		
