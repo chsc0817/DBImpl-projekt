@@ -140,13 +140,13 @@ type Relationer interface {
 	// joinType specifies the kind of hash join (inner, outer, semi ...)
 	// compType specifies the comparison type for the join.
 	// The join may be executed on one or more columns of each relation.
-	//HashJoin(col1 []AttrInfo, rightRelation string, col2 []AttrInfo, joinType JoinType,
-	//	compType Comparison) Relationer
+	HashJoin(col1 []AttrInfo, rightRelation string, col2 []AttrInfo, joinType JoinType,
+		compType Comparison) Relationer
 
 	// Aggregate should implement the grouping and aggregation of columns.
 	// aggregate defines the column on which the aggrFunc should be applied.
 	// All other columns needs to be grouped beforehand.
-	//Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer
+	Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer
 }
 
 // ColumnStore is an example structure on which one could define the ColumnStorer methods.
@@ -162,3 +162,4 @@ type ColumnStorer interface {
 	// GetRelation returns the object reference of a relation associated with the passed relation name.
 	GetRelation(relName string) Relationer
 }
+

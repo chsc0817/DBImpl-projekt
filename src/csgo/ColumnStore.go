@@ -405,3 +405,18 @@ func (rl *Relation) GetRawData() ([]interface{}, []AttrInfo) {
 	}
 	return data, sig
 }
+
+//Not implemented yet
+func (rl *Relation) HashJoin(col1 []AttrInfo, rightRelation string, col2 []AttrInfo, joinType JoinType, compType Comparison) Relationer {
+	var ret Relation
+
+	return &ret
+}
+
+//Not implemented yet
+func (rl *Relation) Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer {
+	var ret Relation
+
+	return &ret
+}
+	
