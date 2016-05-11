@@ -4,8 +4,6 @@ package main
 //import "C:/Uni/Projekte/DBImpl-projekt/interfaces.go"
 import "csgo"
 //import "fmt"
-
- 
  
 func main() {
 	/*var name string
@@ -50,9 +48,9 @@ func main() {
 	sig = append(sig, partkey, suppkey, availqty, supplycost, comment)
 
 	table := cs.CreateRelation("partsupptest", sig)
-	table.Load("C:/Uni/Projekte/Ausgabe/partsupptest.tbl", '|')
+	table.Load("C:/Uni/Projekte/DBImpl-projekt/Eingabe/partsupptest.tbl", '|')
 	table = table.Scan([]csgo.AttrInfo{partkey, suppkey, availqty, supplycost})
-	table = table.Select(availqty, csgo.GT, 1000)
+	table = table.Select(availqty, csgo.GT, 3000)
 	table.Print()
 	table.GetRawData()
 }
