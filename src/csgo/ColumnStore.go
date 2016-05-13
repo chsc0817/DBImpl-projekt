@@ -415,8 +415,142 @@ func (rl *Relation) HashJoin(col1 []AttrInfo, rightRelation string, col2 []AttrI
 
 //Not implemented yet
 func (rl *Relation) Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer {
-	var ret Relation
+	var aggrRelation Relation
+	var aggrColumn Column	
+	var emptyColumn Column
+	var aggrPos int
+	currentRow := make([]interface{}, 0)
+	JoinColumns := make([]Column, 0)
+	groupColumns := make([]Column,0)
+	groupSig := make([]AttrInfo, 0)		
+	
+	for i:=0; i < len(rl.Columns); i++{	
 
-	return &ret
+		if rl.Columns[i].Signature != aggregate {
+			
+			groupColumns = append(groupColumns, rl.Columns[i])
+			groupSig = append(groupSig, rl.Columns[i].Signature)			
+		} else {			
+			aggrColumn = rl.Columns[i]
+			aggrPos = i
+		}
+	}
+
+	for i:=0; i < len(rl.Columns); i++{
+		JoinColumns = append(JoinColumns, emptyColumn)
+		JoinColumns[i].Signature = rl.Columns[i].Signature
+		switch JoinColumns[i].Signature.Type {
+			case INT:
+				JoinColumns[i].Data = make([]int, 0)
+			case FLOAT:
+				JoinColumns[i].Data = make([]float64, 0)
+			case STRING:
+				JoinColumns[i].Data = make([]string, 0)
+		}
+	}
+
+	var aggrColumnLength int
+	switch aggregate.Type {
+		case INT:
+			aggrColumnLength = len(aggrColumn.Data.([]int))
+		case FLOAT:
+			aggrColumnLength = len(aggrColumn.Data.([]float64))
+		case STRING:
+			aggrColumnLength = len(aggrColumn.Data.([]string))
+			
+	}	
+	
+	for i:=0; i < aggrColumnLength; i++{
+		for j:= 0; j < len(groupColumns); j++{
+			switch groupColumns[j].Signature.Type{
+				case INT:
+					currentRow = append(currentRow, groupColumns[j].Data.([]int)[i])
+				case FLOAT:
+					currentRow = append(currentRow, groupColumns[j].Data.([]float64)[i])
+				case STRING:
+					currentRow = append(currentRow, groupColumns[j].Data.([]string)[i])
+			}
+		}	
+		var JoinColumnsLength int				
+		
+		if len(JoinColumns) > 0 {
+			switch JoinColumns[0].Signature.Type {
+				case INT:
+					JoinColumnsLength = len(JoinColumns[0].Data.([]int))
+				case FLOAT:
+					JoinColumnsLength = len(JoinColumns[0].Data.([]float64))
+				case STRING:	
+					JoinColumnsLength = len(JoinColumns[0].Data.([]string))
+			}
+		} else { JoinColumnsLength = 0 }
+		PosAggrColumns := -1
+		for	posInJoin:=0; posInJoin < JoinColumnsLength; posInJoin++ { 
+			PosAggrColumns = -1 
+			
+			for j:=0; j < len(currentRow); j++{
+				if PosAggrColumns == -2 {break}
+				//!!current column switch?
+				switch JoinColumns[j].Signature.Type{
+					case INT:
+						if JoinColumns[j].Data.([]int)[posInJoin] != currentRow[0] {
+							PosAggrColumns = -2
+						}
+					case FLOAT:
+						if JoinColumns[j].Data.([]float64)[posInJoin] != currentRow[0] {
+							PosAggrColumns = -2	
+						}
+					case STRING:
+						if JoinColumns[j].Data.([]string)[posInJoin] != currentRow[0] {
+							PosAggrColumns = -2									
+						}
+				}
+			}
+			//currentrow already in JoinColumns
+			if PosAggrColumns == -1 {
+				PosAggrColumns = posInJoin
+				break
+			}
+		}
+		//currentRow not in JoinColumns
+		switch aggregate.Type {
+			case INT:
+				if PosAggrColumns == -1 {
+				switch aggrFunc {
+					case COUNT:						
+						currentRow = append(currentRow, 1)
+					default:
+						currentRow = append(currentRow, aggrColumn.Data.([]int)[i]) 					
+				}
+				for j:=0; j < len(currentRow); j++ {
+					switch JoinColumns[j].Signature.Type {
+						case INT:
+							JoinColumns[j].Data = append(JoinColumns[j].Data.([]int), currentRow[j].(int))
+					}
+				} 
+			
+		//already in JoinColumns, update aggr value
+			} else {
+				switch aggrFunc {
+					case COUNT:
+						JoinColumns[JoinColumnsLength - 1].Data.([]int)[PosAggrColumns] = JoinColumns[JoinColumnsLength - 1].Data.([]int)[PosAggrColumns] + 1
+					case SUM:
+						JoinColumns[JoinColumnsLength - 1].Data.([]int)[PosAggrColumns] = JoinColumns[JoinColumnsLength - 1].Data.([]int)[PosAggrColumns] + aggrColumn.Data.([]int)[PosAggrColumns]
+					case MAX:
+						if JoinColumns[JoinColumnsLength - 1].Data.([]int)[PosAggrColumns] < aggrColumn.Data.([]int)[PosAggrColumns] {
+							JoinColumns[JoinColumnsLength - 1].Data.([]int)[PosAggrColumns] = aggrColumn.Data.([]int)[PosAggrColumns] 
+						}
+					case MIN:
+						if JoinColumns[JoinColumnsLength - 1].Data.([]int)[PosAggrColumns] > aggrColumn.Data.([]int)[PosAggrColumns] {
+							JoinColumns[JoinColumnsLength - 1].Data.([]int)[PosAggrColumns] = aggrColumn.Data.([]int)[PosAggrColumns] 
+						}
+				}
+			}
+		}
+	}
+	fmt.Print(JoinColumns)
+	aggrRelation.Name = "Aggregate"
+	aggrRelation.Columns = JoinColumns
+	
+	return &aggrRelation
 }
 	
