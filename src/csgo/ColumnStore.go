@@ -565,34 +565,34 @@ func (rl *Relation) Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer 
 				break
 			}
 		}
-		switch aggregate.Type {
-		case INT:
-			
-			//currentRow not in JoinColumns
-			if PosAggrColumns == -2||PosAggrColumns == -1 {
-
-				switch aggrFunc {
-				case COUNT:
-					currentRow = append(currentRow, 1)
-				default:
+		if PosAggrColumns == -2||PosAggrColumns == -1 {
+			//not in JoinColumns, add currentRow to JoinColumns
+			switch aggrFunc {
+			case COUNT:
+				currentRow = append(currentRow, 1)
+			default:
+				if aggregate.Type == FLOAT {
+					currentRow = append(currentRow, aggrColumn.Data.([]float64)[i])
+				} else {
 					currentRow = append(currentRow, aggrColumn.Data.([]int)[i])
 				}
-				
-				for j := 0; j < len(currentRow); j++ {
-				
-					switch JoinColumns[j].Signature.Type {
-					case INT:
-						JoinColumns[j].Data = append(JoinColumns[j].Data.([]int), currentRow[j].(int))
-					case FLOAT:
-						JoinColumns[j].Data = append(JoinColumns[j].Data.([]float64), currentRow[j].(float64))
-					case STRING:
-						JoinColumns[j].Data = append(JoinColumns[j].Data.([]string), currentRow[j].(string))
-					}
+			}
+			
+			for j := 0; j < len(currentRow); j++ {
+	
+				switch JoinColumns[j].Signature.Type {
+				case INT:
+					JoinColumns[j].Data = append(JoinColumns[j].Data.([]int), currentRow[j].(int))
+				case FLOAT:
+					JoinColumns[j].Data = append(JoinColumns[j].Data.([]float64), currentRow[j].(float64))
+				case STRING:
+					JoinColumns[j].Data = append(JoinColumns[j].Data.([]string), currentRow[j].(string))
 				}
-
+			}
+		} else {
 			//already in JoinColumns, update aggr value
-			} else {
-				
+			switch aggregate.Type {
+			case INT:				
 				switch aggrFunc {
 				case COUNT:					
 					JoinColumns[aggrPos].Data.([]int)[PosAggrColumns] = JoinColumns[aggrPos].Data.([]int)[PosAggrColumns] + 1
@@ -607,33 +607,8 @@ func (rl *Relation) Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer 
 						JoinColumns[aggrPos].Data.([]int)[PosAggrColumns]  = aggrColumn.Data.([]int)[i]
 					}
 				}
-			}
-		case FLOAT:
-				
-			//currentRow not in JoinColumns
-			if PosAggrColumns == -2||PosAggrColumns == -1 {
-
-				switch aggrFunc {
-				case COUNT:
-					currentRow = append(currentRow, 1)
-				default:
-					currentRow = append(currentRow, aggrColumn.Data.([]float64)[i])
-				}
-				
-				for j := 0; j < len(currentRow); j++ {
-		
-					switch JoinColumns[j].Signature.Type {
-					case INT:
-						JoinColumns[j].Data = append(JoinColumns[j].Data.([]int), currentRow[j].(int))
-					case FLOAT:
-						JoinColumns[j].Data = append(JoinColumns[j].Data.([]float64), currentRow[j].(float64))
-					case STRING:
-						JoinColumns[j].Data = append(JoinColumns[j].Data.([]string), currentRow[j].(string))
-					}
-				}
-
-			//already in JoinColumns, update aggr value
-			} else {
+			
+			case FLOAT:				
 				switch aggrFunc {
 				case COUNT:					
 					JoinColumns[aggrPos].Data.([]int)[PosAggrColumns] = JoinColumns[aggrPos].Data.([]int)[PosAggrColumns] + 1
@@ -648,34 +623,16 @@ func (rl *Relation) Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer 
 						JoinColumns[aggrPos].Data.([]float64)[PosAggrColumns]  = aggrColumn.Data.([]float64)[i]
 					}
 				}
-			}
-		//only COUNT
-		case STRING:
-			if PosAggrColumns == -2||PosAggrColumns == -1 {					
-				currentRow = append(currentRow, 1)				
-				
-				for j := 0; j < len(currentRow); j++ {
-					switch JoinColumns[j].Signature.Type {
-					case INT:
-						JoinColumns[j].Data = append(JoinColumns[j].Data.([]int), currentRow[j].(int))
-					case FLOAT:
-						JoinColumns[j].Data = append(JoinColumns[j].Data.([]float64), currentRow[j].(float64))
-					case STRING:
-						JoinColumns[j].Data = append(JoinColumns[j].Data.([]string), currentRow[j].(string))
-					}
-				}
-				
-			//already in JoinColumns, add one to count
-			} else {
+			
+		
+			case STRING:
 				value := JoinColumns[aggrPos].Data.([]int)[PosAggrColumns]
 				JoinColumns[aggrPos].Data.([]int)[PosAggrColumns] = value + 1
-				}
-			
+			}			
 		}		
 	}
 	aggrRelation.Name = "Aggregate"
 	aggrRelation.Columns = JoinColumns
 
 	return &aggrRelation
-
 }
