@@ -5,7 +5,9 @@ package csgo
 // TODO: Session 1 - Implement the Relationer and ColumnStorer interface by using e.g. the
 // Relation and ColumnStore struct (i.e. all method signatures/heads in a separte file). Implement
 // Load, Scan, Select, Print, GetRawData, CreateRelation and GetRelation.
-// TODO: Session 2 - Implement HashJoin and Aggregate
+// TODO: Session 2 - Implement HashJoin (inner/equi have to be supported on at least one column)
+// and Aggregate (on one column, remaining columns must be grouped beforehand. Supported aggregate
+// functions must be COUNT, SUM, MIN and MAX)
 // TODO: Session 3 - Parallisation and Acceleration
 
 // Comparison is an enum type for all possible comparison operations used e.g. for Select
@@ -119,8 +121,8 @@ type Relationer interface {
 	// Scan should simply return the specified columns of the relation.
 	Scan(colList []AttrInfo) Relationer
 
-	// Select should return a filtered collection of records defined by predicate
-	// arguments (col, comp, compVal) of one relation.
+	// Select should return a filtered collection of records defined by predicate arguments (col,
+	// comp, compVal) of one relation.
 	// col represents the column used for comparison.
 	// comp defines the type of comparison.
 	// compVal is the value used for the comparison.
@@ -130,17 +132,16 @@ type Relationer interface {
 	// representation.
 	Print()
 
-	// GetRawData should return all columns as a slice of slices (columns) with
-	// the underlying type (int, float, string) in decompressed form and the
-	// corresponding meta information.
+	// GetRawData should return all columns as a slice of slices (columns) with the underlying type
+	// (int, float, string) in decompressed form and the corresponding meta information.
 	GetRawData() ([]interface{}, []AttrInfo)
 
 	// HashJoin should implement the hash join operator between two relations.
-	// rightRelation is the name of the right relation for the hash join
+	// rightRelation is the right relation for the hash join
 	// joinType specifies the kind of hash join (inner, outer, semi ...)
 	// compType specifies the comparison type for the join.
 	// The join may be executed on one or more columns of each relation.
-	HashJoin(col1 []AttrInfo, rightRelation string, col2 []AttrInfo, joinType JoinType,
+	HashJoin(col1 []AttrInfo, rightRelation Relationer, col2 []AttrInfo, joinType JoinType,
 		compType Comparison) Relationer
 
 	// Aggregate should implement the grouping and aggregation of columns.
@@ -162,4 +163,3 @@ type ColumnStorer interface {
 	// GetRelation returns the object reference of a relation associated with the passed relation name.
 	GetRelation(relName string) Relationer
 }
-
