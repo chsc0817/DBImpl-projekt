@@ -4,7 +4,7 @@ package csgo
 //Create the new Relation + Columns and search the Column with which we shall compare
 //Compare the data and the searched Value and put the right ones in the new Relation
 //Strings are only compared on equality and  inequality
-func (rl Relation) Select(col AttrInfo, comp Comparison, compVal interface{}) Relationer {
+func (rl *Relation) Select(col AttrInfo, comp Comparison, compVal interface{}) Relationer {
 	var colu int
 	var ret Relation
 	var create_column Column

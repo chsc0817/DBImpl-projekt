@@ -1,38 +1,69 @@
 package csgo
 
 //Not implemented yet
-func (rl *Relation) HashJoin( col1 []AttrInfo, rightRelation string, col2 []AttrInfo, joinType JoinType, compType Comparison ) Relationer {
-	rightRelation1 = cs.getRelation(rightRelation)
-	var sig = make( []AttrInfo, len(rl.Columns) + len(rightRelation1.Columns) )
-	var colums1 int
-	var colums2 int
+func (rl *Relation) HashJoin( col1 []AttrInfo, rightRelation Relationer, col2 []AttrInfo, joinType JoinType, compType Comparison ) Relationer {
+	var rRelation = rightRelation.(*Relation)
+	var sig = make( []AttrInfo, len( rl.Columns ) + len( rRelation.Columns ) )
+	var ret Relation
+	var columns1 int
+	var columns2 int
 	
-	for i := 0; i < len(rl.Columns); i++ {
-		sig[i] = rl.Columns[i].AttrInfo;
-		if( rl.Columns[i].AttrInfo == col1[0] ) {
-			colums1 = i;
+	ret.Name = rl.Name + rRelation.Name
+	for i := 0; i < len( rl.Columns ); i++ {
+		sig[i] = rl.Columns[i].Signature;
+		if( rl.Columns[i].Signature == col1[0] ) {
+			columns1 = i;
 			break;
 		}
 	}
-	for i := 0; i < len(rightRelation1.Columns); i++ {
-		sig[len(rl.Columns)+i] = rightRelation1.Columns[i].AttrInfo;
-		if( rightRelation1.Columns[i].AttrInfo == col2[0] ) {
-			colums2 = i;
+	for i := 0; i < len( rRelation.Columns ); i++ {
+		sig[len(rl.Columns)+i] = rRelation.Columns[i].Signature;
+		if( rRelation.Columns[i].Signature == col2[0] ) {
+			columns2 = i;
 			break;
 		}
 	}
-	var ret = Relationer.CreateRelation(rl.Name + rightRelation1.Name, sig);
-	for i := 0; i < len(rl.Columns); i++ {
-		for j := 0; j < len(rightRelation1.Columns); j++ {
+	for i := 0; i < ( len( rl.Columns ) + len( rRelation.Columns ) ); i++ {
+		var column Column
+		if i < len( rl.Columns ) {
+			column.Signature = rl.Columns[i].Signature
+		} else {
+			column.Signature = rRelation.Columns[i-len( rl.Columns )].Signature
+		}
+		ret.Columns = append( ret.Columns, column )
+	}
+	for i := 0; i < len( rl.Columns ); i++ {
+		for j := 0; j < len( rRelation.Columns ); j++ {
 			//EQUAL + INNER
-			if rl.Columns[colums1].Data[i] == rightRelation1.Columns[colums2].Data[j] {
-				for k := 0; k < len(rl.Columns); k++ {
-					ret.Columns[k].Data = append( ret.Columns[k].Data, rl.Columns[k].Data )
+			switch rl.Columns[columns1].Signature.Type {
+				case INT:
+					if rl.Columns[columns1].Data.([]int)[i] == rRelation.Columns[columns2].Data.([]int)[j] {
+						for k := 0; k < len( rl.Columns ); k++ {
+							ret.Columns[k].Data = append( ret.Columns[k].Data.([]int), rl.Columns[k].Data.([]int)[i] )
+						}
+						for k := 0; k < len(rRelation.Columns); k++ {
+							ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]int), rRelation.Columns[k].Data.([]int)[j] )
+						}
 				}
-				for k := 0; k < len(rightRelation1.Columns); k++ {
-					ret.Columns[len(rl.Columns)+k].Data = append( ret.Columns[len(rl.Columns)+k].Data, rightRelation1.Columns[k].Data )
+				case FLOAT:
+					if rl.Columns[columns1].Data.([]float64)[i] == rRelation.Columns[columns2].Data.([]float64)[j] {
+						for k := 0; k < len( rl.Columns ); k++ {
+							ret.Columns[k].Data = append( ret.Columns[k].Data.([]float64), rl.Columns[k].Data.([]float64)[i] )
+						}
+						for k := 0; k < len(rRelation.Columns); k++ {
+							ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]float64), rRelation.Columns[k].Data.([]float64)[j] )
+						}
 				}
-			} 
+				case STRING:
+					if rl.Columns[columns1].Data.([]string)[i] == rRelation.Columns[columns2].Data.([]string)[j] {
+						for k := 0; k < len( rl.Columns ); k++ {
+							ret.Columns[k].Data = append( ret.Columns[k].Data.([]string), rl.Columns[k].Data.([]string)[i] )
+						}
+						for k := 0; k < len(rRelation.Columns); k++ {
+							ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]string), rRelation.Columns[k].Data.([]string)[j] )
+						}
+				}
+			}
 		}
 	}
 	
