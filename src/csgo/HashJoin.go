@@ -1,6 +1,9 @@
 package csgo
 
-//Not implemented yet
+//HashJoin
+//Herausuchen der Spalten
+//Vergleich auf Gleichheit und ausführen des INNER Join
+//Ohne Vergleich auf JoinType Und Comparison, weil jeweils nur einer verlangt war.
 func (rl *Relation) HashJoin( col1 []AttrInfo, rightRelation Relationer, col2 []AttrInfo, joinType JoinType, compType Comparison ) Relationer {
 	var rRelation = rightRelation.(*Relation)
 	var sig = make( []AttrInfo, len( rl.Columns ) + len( rRelation.Columns ) )
