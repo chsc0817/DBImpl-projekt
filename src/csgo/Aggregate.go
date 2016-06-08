@@ -67,8 +67,7 @@ func (rl *Relation) Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer 
 		aggrColumnLength = len(aggrColumn.Data.([]float64))
 	case STRING:
 		aggrColumnLength = len(aggrColumn.Data.([]string))
-	}
-	
+	}	
 
 	//add each Row to JoinColumns
 	for i := 0; i < aggrColumnLength; i++ {	
@@ -83,17 +82,6 @@ func (rl *Relation) Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer 
 				currentRow = append(currentRow, groupColumns[j].Data.([]float64)[i])
 			case STRING:
 				currentRow = append(currentRow, groupColumns[j].Data.([]string)[i])
-			}
-		}
-		if aggrFunc == COUNT {
-			switch aggregate.Type {
-				
-			case INT:
-				currentRow = append(currentRow, aggrColumn.Data.([]int)[i])
-			case FLOAT:
-				currentRow = append(currentRow, aggrColumn.Data.([]float64)[i])
-			case STRING:
-				currentRow = append(currentRow, aggrColumn.Data.([]string)[i])
 			}
 		}
 		
