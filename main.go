@@ -35,7 +35,7 @@ func main() {
 	table = table.Select(availqty, csgo.GT, 1000)
 	table.Print()*/
 	//for the new
-	var cs csgo.ColumnStorer
+	/*var cs csgo.ColumnStorer
 	cs = csgo.NewColumnStore()
 	var sig []csgo.AttrInfo
 
@@ -52,5 +52,25 @@ func main() {
 	table = table.Scan([]csgo.AttrInfo{partkey, suppkey, availqty, supplycost})
 	table = table.Select(availqty, csgo.GT, 3000)
 	table.Print()
-	table.GetRawData()
+	table.GetRawData()*/
+	var cs csgo.ColumnStorer
+	cs = csgo.NewColumnStore()
+	var sig []csgo.AttrInfo
+	
+	index := csgo.AttrInfo{Name: "index", Type: csgo.INT, Enc: csgo.NOCOMP}
+	geschlechtsteil := csgo.AttrInfo{Name: "Geschlechtsteil", Type: csgo.STRING, Enc: csgo.NOCOMP}
+	
+	sig = append(sig, index, geschlechtsteil, csgo.AttrInfo{Name: "Geschlechtsteil2", Type: csgo.STRING, Enc: csgo.NOCOMP})
+	
+	var sig2 []csgo.AttrInfo
+	sig2 = append(sig2, index)
+	
+	table1 := cs.CreateRelation("penis", sig)
+	//table2 := cs.CreateRelation("vagina", sig)
+	table1.Load("C:/Uni/Projekte/Ausgabe/penis.tbl",';')
+	//table2.Load("C:/Uni/Projekte/Ausgabe/vagina.tbl",';')
+	//table := table1.HashJoin( sig2, table2, sig2, csgo.INNER, csgo.EQ )
+	table1 = table1.Scan([]csgo.AttrInfo{index, geschlechtsteil})
+	table1 = table1.Aggregate( geschlechtsteil,csgo.COUNT)
+	table1.Print()
 }
