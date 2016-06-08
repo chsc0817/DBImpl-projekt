@@ -45,22 +45,8 @@ func (rl *Relation) Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer 
 			JoinColumns[i].Data = make([]string, 0)
 		}	
 
-	} //...and attrColumn if COUNT is used
+	} 
 	aggrPos := len(JoinColumns)
-	if aggrFunc == COUNT {
-		
-		JoinColumns = append(JoinColumns, emptyColumn)
-		JoinColumns[aggrPos].Signature = aggregate
-		switch aggregate.Type {
-		case INT:
-			JoinColumns[aggrPos].Data = make([]int, 0)
-		case FLOAT:
-			JoinColumns[aggrPos].Data = make([]float64, 0)
-		case STRING:
-			JoinColumns[aggrPos].Data = make([]string, 0)
-		}	
-		aggrPos = aggrPos + 1
-	}	
 	
 	JoinColumns = append(JoinColumns, emptyColumn)	
 	JoinColumns[aggrPos].Signature.Name = "Aggregate"
