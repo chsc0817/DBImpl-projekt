@@ -43,82 +43,98 @@ func (rl *Relation) HashJoin( col1 []AttrInfo, rightRelation Relationer, col2 []
 		}
 		ret.Columns = append( ret.Columns, column )
 	}
-	for i := 0; i < interfacelen( rl.Columns[0].Data ); i++ {
-		for j := 0; j < interfacelen( rRelation.Columns[0].Data ); j++ {
-			//EQUAL + INNER
-			switch rl.Columns[columns1].Signature.Type {
-				case INT:
-					if rl.Columns[columns1].Data.([]int)[i] == rRelation.Columns[columns2].Data.([]int)[j] {
-						for k := 0; k < len( rl.Columns ); k++ {
+    // hash phase
+	switch col1[0].Type {
+		case INT:
+			h := map[interface{}][]int{}
+			for i := 0; i < interfacelen(rl.Columns[0].Data); i++ {
+				h[rl.Columns[columns1].Data.([]int)[i]] = append(h[rl.Columns[columns1].Data.([]int)[i]], i)
+			}
+			// join phase
+			for i := 0; i < interfacelen( rRelation.Columns[0].Data ); i++ {
+				for _, a := range h[rRelation.Columns[columns2].Data.([]int)[i]] {
+					for k := 0; k < len( rl.Columns ); k++ {
 							switch rl.Columns[k].Data.(type) {
 								case []int:
-									ret.Columns[k].Data = append( ret.Columns[k].Data.([]int), rl.Columns[k].Data.([]int)[i] )
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]int), rl.Columns[k].Data.([]int)[a] )
 								case []float64:
-									ret.Columns[k].Data = append( ret.Columns[k].Data.([]float64), rl.Columns[k].Data.([]float64)[i] )
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]float64), rl.Columns[k].Data.([]float64)[a] )
 								case []string:
-									ret.Columns[k].Data = append( ret.Columns[k].Data.([]string), rl.Columns[k].Data.([]string)[i] )
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]string), rl.Columns[k].Data.([]string)[a] )
 							}
 						}
 						for k := 0; k < len(rRelation.Columns); k++ {
 							switch rRelation.Columns[k].Data.(type) {
 								case []int:
-									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]int), rRelation.Columns[k].Data.([]int)[j] )
+									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]int), rRelation.Columns[k].Data.([]int)[i] )
 								case []float64:
-									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]float64), rRelation.Columns[k].Data.([]float64)[j] )
+									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]float64), rRelation.Columns[k].Data.([]float64)[i] )
 								case []string:
-									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]string), rRelation.Columns[k].Data.([]string)[j] )
-							}
-						}
-				}
-				case FLOAT:
-					if rl.Columns[columns1].Data.([]float64)[i] == rRelation.Columns[columns2].Data.([]float64)[j] {
-						for k := 0; k < len( rl.Columns ); k++ {
-							switch rl.Columns[k].Data.(type) {
-								case []int:
-									ret.Columns[k].Data = append( ret.Columns[k].Data.([]int), rl.Columns[k].Data.([]int)[i] )
-								case []float64:
-									ret.Columns[k].Data = append( ret.Columns[k].Data.([]float64), rl.Columns[k].Data.([]float64)[i] )
-								case []string:
-									ret.Columns[k].Data = append( ret.Columns[k].Data.([]string), rl.Columns[k].Data.([]string)[i] )
-							}
-						}
-						for k := 0; k < len(rRelation.Columns); k++ {
-							switch rRelation.Columns[k].Data.(type) {
-								case []int:
-									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]int), rRelation.Columns[k].Data.([]int)[j] )
-								case []float64:
-									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]float64), rRelation.Columns[k].Data.([]float64)[j] )
-								case []string:
-									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]string), rRelation.Columns[k].Data.([]string)[j] )
-							}
-						}
-				}
-				case STRING:
-					if rl.Columns[columns1].Data.([]string)[i] == rRelation.Columns[columns2].Data.([]string)[j] {
-						for k := 0; k < len( rl.Columns ); k++ {
-							switch rl.Columns[k].Data.(type) {
-								case []int:
-									ret.Columns[k].Data = append( ret.Columns[k].Data.([]int), rl.Columns[k].Data.([]int)[i] )
-								case []float64:
-									ret.Columns[k].Data = append( ret.Columns[k].Data.([]float64), rl.Columns[k].Data.([]float64)[i] )
-								case []string:
-									ret.Columns[k].Data = append( ret.Columns[k].Data.([]string), rl.Columns[k].Data.([]string)[i] )
-							}
-						}
-						for k := 0; k < len(rRelation.Columns); k++ {
-							switch rRelation.Columns[k].Data.(type) {
-								case []int:
-									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]int), rRelation.Columns[k].Data.([]int)[j] )
-								case []float64:
-									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]float64), rRelation.Columns[k].Data.([]float64)[j] )
-								case []string:
-									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]string), rRelation.Columns[k].Data.([]string)[j] )
+									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]string), rRelation.Columns[k].Data.([]string)[i] )
 							}
 						}
 				}
 			}
-		}
+		case FLOAT:
+			h := map[interface{}][]int{}
+			for i := 0; i < interfacelen(rl.Columns[0].Data); i++ {
+				h[rl.Columns[columns1].Data.([]float64)[i]] = append(h[rl.Columns[columns1].Data.([]float64)[i]], i)
+			}
+			// join phase
+			for i := 0; i < interfacelen( rRelation.Columns[0].Data ); i++ {
+				for _, a := range h[rRelation.Columns[columns2].Data.([]float64)[i]] {
+					for k := 0; k < len( rl.Columns ); k++ {
+							switch rl.Columns[k].Data.(type) {
+								case []int:
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]int), rl.Columns[k].Data.([]int)[a] )
+								case []float64:
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]float64), rl.Columns[k].Data.([]float64)[a] )
+								case []string:
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]string), rl.Columns[k].Data.([]string)[a] )
+							}
+						}
+						for k := 0; k < len(rRelation.Columns); k++ {
+							switch rRelation.Columns[k].Data.(type) {
+								case []int:
+									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]int), rRelation.Columns[k].Data.([]int)[i] )
+								case []float64:
+									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]float64), rRelation.Columns[k].Data.([]float64)[i] )
+								case []string:
+									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]string), rRelation.Columns[k].Data.([]string)[i] )
+							}
+						}
+				}
+			}
+		case STRING:
+			h := map[interface{}][]int{}
+			for i := 0; i < interfacelen(rl.Columns[0].Data); i++ {
+				h[rl.Columns[columns1].Data.([]string)[i]] = append(h[rl.Columns[columns1].Data.([]string)[i]], i)
+			}
+			// join phase
+			for i := 0; i < interfacelen( rRelation.Columns[0].Data ); i++ {
+				for _, a := range h[rRelation.Columns[columns2].Data.([]string)[i]] {
+					for k := 0; k < len( rl.Columns ); k++ {
+							switch rl.Columns[k].Data.(type) {
+								case []int:
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]int), rl.Columns[k].Data.([]int)[a] )
+								case []float64:
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]float64), rl.Columns[k].Data.([]float64)[a] )
+								case []string:
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]string), rl.Columns[k].Data.([]string)[a] )
+							}
+						}
+						for k := 0; k < len(rRelation.Columns); k++ {
+							switch rRelation.Columns[k].Data.(type) {
+								case []int:
+									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]int), rRelation.Columns[k].Data.([]int)[i] )
+								case []float64:
+									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]float64), rRelation.Columns[k].Data.([]float64)[i] )
+								case []string:
+									ret.Columns[len( rl.Columns )+k].Data = append( ret.Columns[len(rl.Columns)+k].Data.([]string), rRelation.Columns[k].Data.([]string)[i] )
+							}
+						}
+				}
+			}
 	}
-	
 	return &ret
 }
