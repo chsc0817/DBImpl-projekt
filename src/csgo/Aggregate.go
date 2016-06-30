@@ -26,18 +26,19 @@ func (rl *Relation) Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer 
 		RowLength = len(rl.Columns[aggrPos].Data.([]float64))
 	case STRING:
 		RowLength = len(rl.Columns[aggrPos].Data.([]string))
-		aggregate.Type = INT		
 	}		
-	//place aggregate Column at the end	
+	//place aggregate Column at the end
 	if aggrPos != ColumnLength - 1 {
 		temp := rl.Columns[aggrPos]
 		rl.Columns[aggrPos] = rl.Columns[ColumnLength -1] 
 		rl.Columns[ColumnLength -1] = temp	
 		aggrPos = ColumnLength - 1		
 	}
+	if aggrFunc == COUNT && aggregate.Type == FLOAT || aggregate.Type == STRING {
+		rl.Columns[aggrPos].Data = make([]int, 0)	
+	}
 	rl.Columns[aggrPos].Signature.Name = "Aggregate"
 	AlreadyAggregatedRows := 0
-
 	for i:=0; i < RowLength; i++ {
 		for  RowIndex:=0; RowIndex < AlreadyAggregatedRows; RowIndex++ {	
 			HasSameValues = true
@@ -61,13 +62,7 @@ func (rl *Relation) Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer 
 			if HasSameValues {
 				switch aggrFunc {
 					case COUNT:
-						switch aggregate.Type{
-							case INT:
-								rl.Columns[aggrPos].Data.([]int)[RowIndex] = rl.Columns[aggrPos].Data.([]int)[RowIndex] + 1 
-							case FLOAT:
-								rl.Columns[aggrPos].Data.([]float64)[RowIndex] = rl.Columns[aggrPos].Data.([]float64)[RowIndex] + 1 		
-						}
-						
+						rl.Columns[aggrPos].Data.([]int)[RowIndex] = rl.Columns[aggrPos].Data.([]int)[RowIndex] + 1 					
 					case MAX:
 						switch aggregate.Type {
 							case INT:
@@ -95,7 +90,6 @@ func (rl *Relation) Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer 
 						}	
 				break
 		}	}
-
 		if !HasSameValues {
 			for j:=0;j < aggrPos; j++ {
 				switch rl.Columns[j].Signature.Type{
@@ -111,8 +105,8 @@ func (rl *Relation) Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer 
 				switch aggregate.Type {
 					case INT:
 					rl.Columns[aggrPos].Data.([]int)[AlreadyAggregatedRows] = 1
-					case FLOAT:
-					rl.Columns[aggrPos].Data.([]float64)[AlreadyAggregatedRows] = 1
+					default:
+					rl.Columns[aggrPos].Data = append(rl.Columns[aggrPos].Data.([]int), 1)
 				}				
 			} else {
 				switch aggregate.Type {
@@ -124,6 +118,10 @@ func (rl *Relation) Aggregate(aggregate AttrInfo, aggrFunc AggrFunc) Relationer 
 			}	}	
 			AlreadyAggregatedRows++
 	}	}
+	//all rows tested, change aggregate type if necessary and cut unused rows
+	if aggrFunc == COUNT && aggregate.Type == FLOAT || aggregate.Type == STRING {
+		rl.Columns[aggrPos].Signature.Type = INT	
+	}
 	for j:=0; j < ColumnLength; j++ {
 		switch rl.Columns[j].Signature.Type{
 			case INT:
