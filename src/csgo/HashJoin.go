@@ -43,6 +43,16 @@ func joinInt( h map[interface{}][]int, start int, stop int, columns2 int, rl *Re
 	ret := <-c2
 	for i := start; i < stop; i++ {
 		for _, a := range h[rRelation.Columns[columns2].Data.([]int)[i]] {
+			for k := 0; k < len( rl.Columns ); k++ {
+							switch rl.Columns[k].Data.(type) {
+								case []int:
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]int), rl.Columns[k].Data.([]int)[a] )
+								case []float64:
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]float64), rl.Columns[k].Data.([]float64)[a] )
+								case []string:
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]string), rl.Columns[k].Data.([]string)[a] )
+							}
+						}
 			for k := 0; k < len(rRelation.Columns); k++ {
 				switch rRelation.Columns[k].Data.(type) {
 					case []int:
@@ -64,6 +74,16 @@ func joinFloat( h map[interface{}][]int, start int, stop int, columns2 int, rl *
 	ret := <-c2
 	for i := start; i < stop; i++ {
 		for _, a := range h[rRelation.Columns[columns2].Data.([]float64)[i]] {
+		for k := 0; k < len( rl.Columns ); k++ {
+							switch rl.Columns[k].Data.(type) {
+								case []int:
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]int), rl.Columns[k].Data.([]int)[a] )
+								case []float64:
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]float64), rl.Columns[k].Data.([]float64)[a] )
+								case []string:
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]string), rl.Columns[k].Data.([]string)[a] )
+							}
+						}
 			for k := 0; k < len(rRelation.Columns); k++ {
 				switch rRelation.Columns[k].Data.(type) {
 					case []int:
@@ -83,11 +103,18 @@ func joinString( h map[interface{}][]int, start int, stop int, columns2 int, rl 
 	c2 := make(chan Relation)
 	go CreateRelation( rl, rRelation, c2 )
 	ret := <-c2
-	fmt.Println()
-	fmt.Println(start)
-	fmt.Println(stop)
 	for i := start; i < stop; i++ {
 		for _, a := range h[rRelation.Columns[columns2].Data.([]string)[i]] {
+			for k := 0; k < len( rl.Columns ); k++ {
+							switch rl.Columns[k].Data.(type) {
+								case []int:
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]int), rl.Columns[k].Data.([]int)[a] )
+								case []float64:
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]float64), rl.Columns[k].Data.([]float64)[a] )
+								case []string:
+									ret.Columns[k].Data = append( ret.Columns[k].Data.([]string), rl.Columns[k].Data.([]string)[a] )
+							}
+						}
 			for k := 0; k < len(rRelation.Columns); k++ {
 				switch rRelation.Columns[k].Data.(type) {
 					case []int:
@@ -100,6 +127,7 @@ func joinString( h map[interface{}][]int, start int, stop int, columns2 int, rl 
 			}
 		}
 	}
+	fmt.Println()
 	fmt.Println(ret)
 	c <- ret
 }
@@ -112,14 +140,15 @@ func joinString( h map[interface{}][]int, start int, stop int, columns2 int, rl 
 func (rl *Relation) HashJoin( col1 []AttrInfo, rightRelation Relationer, col2 []AttrInfo, joinType JoinType, compType Comparison ) Relationer {
 	var rRelation = rightRelation.(*Relation)
 	
+	c0 := make(chan int)
 	c1 := make(chan int)
 	c2 := make(chan Relation)
 	go CreateRelation( rl, rRelation, c2 )
-	go whichColumn( rl, col1,  c1)
+	go whichColumn( rl, col1,  c0)
 	go whichColumn( rRelation, col2,  c1 )
-	columns1,columns2 := <-c1, <-c1
+	columns1 := <-c0
+	columns2 := <-c1
 	ret := <-c2
-	fmt.Println(ret)
     // hash phase
 	c3 := make(chan Relation)
 	switch col1[0].Type {
@@ -155,25 +184,20 @@ func (rl *Relation) HashJoin( col1 []AttrInfo, rightRelation Relationer, col2 []
 			go joinString( h, ( interfacelen( rRelation.Columns[0].Data ) / 2 + 1 ), interfacelen( rRelation.Columns[0].Data ), columns2, rl, rRelation, c3 )
 	}
 	ret1,ret2 := <-c3,<-c3
-	fmt.Println(ret1.Columns)
-	fmt.Println(ret2.Columns)
 	for i := 0; i < (len( rl.Columns ) + len( rRelation.Columns )); i++ {
 		switch ret.Columns[i].Data.(type) {
 			case []int :
-				fmt.Println("int1")
 				if ret1.Columns[i].Data != nil {
 					for j := 0; j < interfacelen(ret1.Columns[i].Data); j++ {
 						ret.Columns[i].Data = append( ret.Columns[i].Data.([]int), ret1.Columns[i].Data.([]int)[j] )
 					}	
 				}
-				fmt.Println("int2")
 				if ret2.Columns[i].Data != nil {
 					for j := 0; j < interfacelen(ret2.Columns[i].Data); j++ {
 						ret.Columns[i].Data = append( ret.Columns[i].Data.([]int), ret2.Columns[i].Data.([]int)[j] )
 					}
 				}
 			case []float64 :
-				fmt.Println("float1")
 				if ret1.Columns[i].Data != nil {
 				for j := 0; j < interfacelen(ret1.Columns[i].Data); j++ {
 					ret.Columns[i].Data = append( ret.Columns[i].Data.([]float64), ret1.Columns[i].Data.([]float64)[j] )
