@@ -159,9 +159,9 @@ func (rl *Relation) HashJoin( col1 []AttrInfo, rightRelation Relationer, col2 []
 			}
 			// join phase
 			go joinInt( h, 0, ( interfacelen( rRelation.Columns[0].Data ) / 4 ), columns2, rl, rRelation, c3 )
-			go joinInt( h, (interfacelen( rRelation.Columns[0].Data ) / 4 + 1), ( interfacelen( rRelation.Columns[0].Data ) / 2 ), columns2, rl, rRelation, c3 )
+			go joinInt( h, (interfacelen( rRelation.Columns[0].Data ) / 4), ( interfacelen( rRelation.Columns[0].Data ) / 2 ), columns2, rl, rRelation, c3 )
 			go joinInt( h, ( interfacelen( rRelation.Columns[0].Data ) / 2 ), interfacelen( rRelation.Columns[0].Data ) * 3 / 4, columns2, rl, rRelation, c3 )
-			go joinInt( h, (interfacelen( rRelation.Columns[0].Data ) *3 / 4 + 1), interfacelen( rRelation.Columns[0].Data ), columns2, rl, rRelation, c3 )
+			go joinInt( h, (interfacelen( rRelation.Columns[0].Data ) *3 / 4), interfacelen( rRelation.Columns[0].Data ), columns2, rl, rRelation, c3 )
 		case FLOAT:
 			h := map[interface{}][]int{}
 			for i := 0; i < interfacelen(rl.Columns[0].Data); i++ {
@@ -169,9 +169,9 @@ func (rl *Relation) HashJoin( col1 []AttrInfo, rightRelation Relationer, col2 []
 			}
 			// join phase
 			go joinFloat( h, 0, ( interfacelen( rRelation.Columns[0].Data ) / 4 ), columns2, rl, rRelation, c3 )
-			go joinFloat( h, (interfacelen( rRelation.Columns[0].Data ) / 4 + 1), ( interfacelen( rRelation.Columns[0].Data ) / 2 ), columns2, rl, rRelation, c3 )
+			go joinFloat( h, (interfacelen( rRelation.Columns[0].Data ) / 4), ( interfacelen( rRelation.Columns[0].Data ) / 2 ), columns2, rl, rRelation, c3 )
 			go joinFloat( h, ( interfacelen( rRelation.Columns[0].Data ) / 2 ), interfacelen( rRelation.Columns[0].Data ) * 3 / 4, columns2, rl, rRelation, c3 )
-			go joinFloat( h, (interfacelen( rRelation.Columns[0].Data ) *3 / 4 + 1), interfacelen( rRelation.Columns[0].Data ), columns2, rl, rRelation, c3 )
+			go joinFloat( h, (interfacelen( rRelation.Columns[0].Data ) *3 / 4), interfacelen( rRelation.Columns[0].Data ), columns2, rl, rRelation, c3 )
 		case STRING:
 			h := map[interface{}][]int{}
 			for i := 0; i < interfacelen(rl.Columns[0].Data); i++ {
@@ -179,9 +179,9 @@ func (rl *Relation) HashJoin( col1 []AttrInfo, rightRelation Relationer, col2 []
 			}
 			// join phase
 			go joinString( h, 0, ( interfacelen( rRelation.Columns[0].Data ) / 4 ), columns2, rl, rRelation, c3 )
-			go joinString( h, (interfacelen( rRelation.Columns[0].Data ) / 4 + 1), ( interfacelen( rRelation.Columns[0].Data ) / 2 ), columns2, rl, rRelation, c3 )
+			go joinString( h, (interfacelen( rRelation.Columns[0].Data ) / 4), ( interfacelen( rRelation.Columns[0].Data ) / 2 ), columns2, rl, rRelation, c3 )
 			go joinString( h, ( interfacelen( rRelation.Columns[0].Data ) / 2 ), interfacelen( rRelation.Columns[0].Data ) * 3 / 4, columns2, rl, rRelation, c3 )
-			go joinString( h, (interfacelen( rRelation.Columns[0].Data ) *3 / 4 + 1), interfacelen( rRelation.Columns[0].Data ), columns2, rl, rRelation, c3 )
+			go joinString( h, (interfacelen( rRelation.Columns[0].Data ) *3 / 4), interfacelen( rRelation.Columns[0].Data ), columns2, rl, rRelation, c3 )
 	}
 	ret,ret2,ret3,ret4 := <-c3,<-c3,<-c3,<-c3
 	//merge/join the to relation
