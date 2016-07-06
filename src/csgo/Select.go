@@ -2,6 +2,7 @@ package csgo
 
 import "fmt"
 
+//Zeilen vergleichen und die, die bei denen der Vergleich erfolgreich ist, in die Ergebnisrelation schreiben
 func CompareColumn( rl *Relation, col AttrInfo, comp Comparison, compVal interface{}, colu int, start int, stop int, c chan Relation ) {
 	var ret Relation
 	var create_column Column
@@ -129,11 +130,14 @@ func (rl *Relation) Select(col AttrInfo, comp Comparison, compVal interface{}) R
 	}
 	//Compare the data and the searched Value and put the right ones in the new Relation
 	c3 := make(chan Relation)
+	//Compare first part
 	go CompareColumn( rl, col, comp, compVal, colu, 0, interfacelen( rl.Columns[0].Data ) / 2, c3 )
+	//Compare second part
 	go CompareColumn( rl, col, comp, compVal, colu, interfacelen( rl.Columns[0].Data ) / 2, interfacelen( rl.Columns[0].Data ), c3 )
 	ret1,ret2 := <-c3,<-c3
 	fmt.Println(ret1)
 	fmt.Println(ret2)
+	//merge/join the to relation
 	for i := 0; i < len( rl.Columns ); i++ {
 		switch rl.Columns[i].Data.(type) {
 			case []int :

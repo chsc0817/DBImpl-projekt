@@ -183,6 +183,7 @@ func (rl *Relation) HashJoin( col1 []AttrInfo, rightRelation Relationer, col2 []
 			go joinString( h, ( interfacelen( rRelation.Columns[0].Data ) / 2 + 1 ), interfacelen( rRelation.Columns[0].Data ), columns2, rl, rRelation, c3 )
 	}
 	ret1,ret2 := <-c3,<-c3
+	//merge/join the to relation
 	for i := 0; i < (len( rl.Columns ) + len( rRelation.Columns )); i++ {
 		switch ret.Columns[i].Data.(type) {
 			case []int :
